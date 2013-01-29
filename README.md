@@ -1,5 +1,12 @@
-Library for accessing mBank's transaction service
-=================================================
+Library for accessing mBank's transaction service.
+--------------------------------------------------
+
+Suitable for checking for new transactions. Implemented methods:
+
+* login
+* list accounts
+* list operations (last 14 days)
+* logout
 
 Example usage
 -------------
