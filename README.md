@@ -8,6 +8,12 @@ Suitable for checking for new transactions. Implemented methods:
 * list operations (last 14 days)
 * logout
 
+Requirements
+------------
+
+* PHP 5.3 or higher
+* [cURL](http://www.php.net/manual/book.curl.php) extension
+
 Example usage
 -------------
 
