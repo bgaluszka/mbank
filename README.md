@@ -1,5 +1,5 @@
-Library for accessing mBank's transaction service
--------------------------------------------------
+Library for accessing mBank PL transaction service
+--------------------------------------------------
 
 Suitable for checking for new transactions. Implemented methods:
 
@@ -22,7 +22,7 @@ Example usage
 require_once 'lib/Mbank/Mbank.php';
 
 try {
-    $mbank = new Mbank\Mbank();
+    $mbank = new \Mbank\Mbank();
     // not required but recommended
     // you can obtain certs from http://curl.haxx.se/docs/caextract.html
     $mbank->setopt(array(
