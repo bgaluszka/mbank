@@ -1,7 +1,7 @@
 {
     "name": "bgaluszka/mbank",
     "type": "library",
-    "description": "Library for accessing mBank's transaction service",
+    "description": "Library for accessing mBank PL transaction service",
     "keywords": ["mbank","api"],
     "homepage": "https://github.com/bgaluszka/mbank",
     "license": "MIT",
