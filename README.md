@@ -14,12 +14,26 @@ Requirements
 * PHP 5.3 or higher
 * [cURL](http://www.php.net/manual/book.curl.php) extension
 
+Installation
+------------
+
+Install library from composer:
+
+```json
+{
+    "require": {
+        "bgaluszka/mbank": "dev-master"
+    }
+}
+```
+
 Example usage
 -------------
 
 ```php
 <?php
-require_once 'lib/Mbank/Mbank.php';
+// load the autoload.php from composer
+require 'vendor/autoload.php';
 
 try {
     $mbank = new \Mbank\Mbank();
