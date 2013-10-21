@@ -62,6 +62,7 @@ class Mbank
     {
         $opts = array(
             CURLOPT_URL => self::URL,
+            CURLOPT_REFERER => 'http://www.mbank.pl/login/',
         );
         $this->curl($opts);
 
