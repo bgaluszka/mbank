@@ -147,20 +147,30 @@ class Mbank
         $nodes = $this->xpath->query('//div[@id="account_operations"]/ul/li[p[@class="Date"]/span]');
 
         foreach ($nodes as $node) {
-            $name = $this->xpath->evaluate('string(p[@class="OperationDescription"]/a)', $node);
-            $name = trim($name);
+            $type = $this->xpath->evaluate('string(p[@class="OperationDescription"]/a)', $node);
+            $type = trim($type);
 
-            $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span)', $node);
+            $elements = $this->xpath->evaluate('count(p[@class="OperationDescription"]/span)', $node);
+            
+            if($elements == 3){
+                $name = '';
+                $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
+                $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
+            } elseif($elements == 4){
+                $name = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
+                $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
+                $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[3])', $node);
+            }
+            
             $title = trim($title);
             $title = preg_replace('/\s{2,}/', "\n", $title);
-
-            $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
             $iban = preg_replace('/[^\d]/', '', $iban);
-
+            
             $value = $this->xpath->evaluate('string(p[@class="Amount"][1]/span)', $node);
             preg_match('/ (?<currency>\w{3})$/', $value, $matches);
             $currency = $matches['currency'];
             $value = self::tofloat($value);
+            $flow = $value > 0;
 
             $balance = $this->xpath->evaluate('string(p[@class="Amount"][2]/span)', $node);
             $balance = self::tofloat($balance);
@@ -172,10 +182,12 @@ class Mbank
             $released = date('Y-m-d', strtotime($released));
 
             $operations[] = compact(
+                'type',
                 'name',
                 'title',
                 'iban',
                 'value',
+                'flow',
                 'balance',
                 'currency',
                 'created',
