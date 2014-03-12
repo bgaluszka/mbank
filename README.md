@@ -48,7 +48,7 @@ foreach ($mbank->accounts() as $account) {
     echo "{$account['name']} {$account['value']} {$account['currency']}\n";
 
     foreach ($mbank->operations($account) as $operation) {
-        echo "{$operation['name']} {$operation['value']} {$operation['currency']}\n";
+        echo "{$operation['type']} {$operation['value']} {$operation['currency']}\n";
     }
 }
 
