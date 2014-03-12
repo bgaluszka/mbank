@@ -33,25 +33,28 @@ class Mbank
 
     protected $xpath;
 
-    protected $opts = array(
-        CURLOPT_URL => null,
-        CURLOPT_POST => false,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HEADER => true,
-        CURLOPT_HTTPHEADER => array('Expect:'),
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSLVERSION => 3,
-        // http://blog.volema.com/curl-rce.html
-        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
-        CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
-    );
+    protected $opts = array();
 
     const URL = 'https://www.mbank.com.pl';
 
     public function __construct()
     {
         $this->curl = curl_init();
+
+        $this->opts = array(
+            CURLOPT_URL => null,
+            CURLOPT_POST => false,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_HTTPHEADER => array('Expect:'),
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSLVERSION => 3,
+            // http://blog.volema.com/curl-rce.html
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+            CURLOPT_COOKIE => &$this->cookie,
+        );
 
         $this->document = new \DOMDocument();
         $this->document->preserveWhiteSpace = false;
@@ -215,9 +218,6 @@ class Mbank
 
     protected function curl($opts)
     {
-        $opts += array(
-            CURLOPT_COOKIE => $this->cookie,
-        );
         $opts += $this->opts;
 
         curl_setopt_array($this->curl, $opts);
