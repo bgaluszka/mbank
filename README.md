@@ -40,7 +40,7 @@ $mbank = new \Mbank\Mbank();
 // you can obtain certs from http://curl.haxx.se/docs/caextract.html
 $mbank->setopt(array(
     CURLOPT_SSL_VERIFYPEER => true,
-    CURLOPT_CAINFO => dirname(__FILE__) . '/crt/cacert.pem',
+    CURLOPT_CAINFO => dirname(__FILE__) . '/vendor/bgaluszka/mbank/crt/cacert.pem',
 ));
 $mbank->login('id', 'password');
 
