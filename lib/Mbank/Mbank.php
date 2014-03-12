@@ -151,26 +151,25 @@ class Mbank
             $type = trim($type);
 
             $elements = $this->xpath->evaluate('count(p[@class="OperationDescription"]/span)', $node);
-            
-            if($elements == 3){
+
+            if ($elements == 3) {
                 $name = '';
                 $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
                 $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
-            } elseif($elements == 4){
+            } elseif ($elements == 4) {
                 $name = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
                 $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
                 $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[3])', $node);
             }
-            
+
             $title = trim($title);
             $title = preg_replace('/\s{2,}/', "\n", $title);
             $iban = preg_replace('/[^\d]/', '', $iban);
-            
+
             $value = $this->xpath->evaluate('string(p[@class="Amount"][1]/span)', $node);
             preg_match('/ (?<currency>\w{3})$/', $value, $matches);
             $currency = $matches['currency'];
             $value = self::tofloat($value);
-            $flow = $value > 0;
 
             $balance = $this->xpath->evaluate('string(p[@class="Amount"][2]/span)', $node);
             $balance = self::tofloat($balance);
@@ -187,7 +186,6 @@ class Mbank
                 'title',
                 'iban',
                 'value',
-                'flow',
                 'balance',
                 'currency',
                 'created',
