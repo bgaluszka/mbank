@@ -39,8 +39,12 @@ class Mbank
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HEADER => true,
-        CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_HTTPHEADER => array('Expect:'),
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSLVERSION => 3,
+        // http://blog.volema.com/curl-rce.html
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+        CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
     );
 
     const URL = 'https://www.mbank.com.pl';
