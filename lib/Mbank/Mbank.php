@@ -157,16 +157,20 @@ class Mbank
             $type = $this->xpath->evaluate('string(p[@class="OperationDescription"]/a)', $node);
             $type = trim($type);
 
-            $elements = $this->xpath->evaluate('count(p[@class="OperationDescription"]/span)', $node);
+            $spans = $this->xpath->evaluate('count(p[@class="OperationDescription"]/span)', $node);
 
-            if ($elements == 3) {
+            if ($spans == 3) {
                 $name = '';
                 $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
                 $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
-            } elseif ($elements == 4) {
+            } elseif ($spans == 4) {
                 $name = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
                 $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
                 $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[3])', $node);
+            } else {
+                $name = '';
+                $iban = '';
+                $title = '';
             }
 
             $title = trim($title);
