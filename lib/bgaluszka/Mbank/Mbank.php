@@ -21,7 +21,7 @@
  * THE SOFTWARE.
  */
 
-namespace Mbank;
+namespace bgaluszka\Mbank;
 
 class Mbank
 {
