@@ -35,7 +35,7 @@ Example usage
 // load the autoload.php from composer
 require 'vendor/autoload.php';
 
-$mbank = new \Mbank\Mbank();
+$mbank = new \bgaluszka\Mbank\Mbank();
 // not required but recommended
 // you can obtain certs from http://curl.haxx.se/docs/caextract.html
 $mbank->setopt(array(
