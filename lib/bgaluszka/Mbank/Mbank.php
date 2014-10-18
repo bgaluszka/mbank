@@ -28,7 +28,7 @@ class Mbank
             CURLOPT_HEADER => true,
             CURLOPT_HTTPHEADER => array('Expect:'),
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSLVERSION => 3,
+            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1,
             // http://blog.volema.com/curl-rce.html
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
             CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
