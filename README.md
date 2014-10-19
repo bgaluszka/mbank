@@ -37,13 +37,16 @@ require 'vendor/autoload.php';
 
 $mbank = new \bgaluszka\Mbank\Mbank();
 $mbank->login('id', 'password');
-$mbank->profile('individual');
 
-foreach ($mbank->accounts() as $account) {
-    echo "{$account['name']} {$account['value']} {$account['currency']}\n";
+foreach (array('individual', 'business') as $profile) {
+    $mbank->profile($profile);
 
-    foreach ($mbank->operations($account['iban']) as $operation) {
-        echo "{$operation['description']} {$operation['value']} {$account['currency']}\n";
+    foreach ($mbank->accounts() as $account) {
+        echo "{$account['name']} {$account['value']} {$account['currency']}\n";
+
+        foreach ($mbank->operations($account['iban']) as $operation) {
+            echo "{$operation['description']} {$operation['value']} {$account['currency']}\n";
+        }
     }
 }
 
