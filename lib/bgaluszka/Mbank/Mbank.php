@@ -83,11 +83,20 @@ class Mbank
 
     public function profile($profile)
     {
+        $profiles = array(
+            'individual' => 'I',
+            'business' => 'F',
+        );
+
+        if (!isset($profiles[$profile])) {
+            throw new \Exception('Invalid profile (individual|business)');
+        }
+
         $opts = array(
             CURLOPT_URL => $this->url . '/LoginMain/Account/JsonActivateProfile',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
-                'profileCode' => $profile,
+                'profileCode' => $profiles[$profile],
             ),
         );
 
@@ -155,7 +164,7 @@ class Mbank
                 'date' => $this->xpath->evaluate('string(div[@class="column date"])', $node),
                 'description' => $this->xpath->evaluate('string(div[@class="column description"]/span/span)', $node),
                 'category' => $this->xpath->evaluate('string(div[@class="column category"]/div[1]/span)', $node),
-                'amount' => self::tofloat($this->xpath->evaluate('string(div[@class="column amount"]/strong)', $node)),
+                'value' => self::tofloat($this->xpath->evaluate('string(div[@class="column amount"]/strong)', $node)),
             ));
         }
 
@@ -200,7 +209,7 @@ class Mbank
 
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
-        if ($code !== 200) {
+        if ($code >= 400) {
             throw new \Exception("curl() failed - HTTP Status Code {$code}");
         }
 
