@@ -6,7 +6,7 @@ class Mbank
 {
     protected $curl;
 
-    protected $cookie;
+    protected $tab, $token;
 
     protected $document;
 
@@ -14,7 +14,7 @@ class Mbank
 
     protected $opts = array();
 
-    const URL = 'https://www.mbank.com.pl';
+    public $url = 'https://online.mbank.pl/pl';
 
     public function __construct()
     {
@@ -23,19 +23,19 @@ class Mbank
         $this->opts = array(
             CURLOPT_URL => null,
             CURLOPT_POST => false,
-            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HEADER => true,
-            CURLOPT_HTTPHEADER => array('Expect:'),
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_CAINFO => dirname(dirname(__DIR__)) . '/crt/cacert.pem',
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1,
             // http://blog.volema.com/curl-rce.html
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
-            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
-            CURLOPT_COOKIE => &$this->cookie,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+            // http://stackoverflow.com/a/1490482
+            CURLOPT_COOKIEJAR => '/dev/null',
         );
 
-        $this->document = new \DOMDocument();
+        $this->document = new \DOMDocument('1.0', 'UTF-8');
         $this->document->preserveWhiteSpace = false;
     }
 
@@ -44,143 +44,119 @@ class Mbank
         curl_close($this->curl);
     }
 
-    public function login($customer, $password)
+    public function login($username, $password)
     {
         $opts = array(
-            CURLOPT_URL => self::URL,
-            CURLOPT_REFERER => 'http://www.mbank.pl/login/',
+            CURLOPT_URL => $this->url . '/Login',
         );
-        $this->curl($opts);
+        $response = $this->curl($opts);
 
         $opts = array(
-            CURLOPT_URL => self::URL . '/logon.aspx',
+            CURLOPT_URL => $this->url . '/Account/JsonLogin',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
-                '__PARAMETERS' => $this->xpath->evaluate('string(//input[@name="__PARAMETERS"]/@value)'),
-                '__STATE' => $this->xpath->evaluate('string(//input[@name="__STATE"]/@value)'),
-                '__VIEWSTATE' => $this->xpath->evaluate('string(//input[@name="__VIEWSTATE"]/@value)'),
-                '__EVENTVALIDATION' => $this->xpath->evaluate('string(//input[@name="__EVENTVALIDATION"]/@value)'),
-                'customer' => $customer,
-                'password' => $password,
-                'seed' => $this->xpath->evaluate('string(//input[@name="seed"]/@value)'),
+                'UserName' => $username,
+                'Password' => $password,
+                'Seed' => '',
+                'Lang' => '',
             ),
         );
-        $this->curl($opts);
+        $response = $this->curl($opts);
 
-        if (!preg_match('/mBank2(?!\s+NotValid)/', $this->cookie)) {
+        if (empty($response['successful'])) {
             throw new \Exception('login() failed');
         }
 
+        $this->tab = $response['tabId'];
+
+        $opts = array(
+            CURLOPT_URL => $this->url,
+        );
+        $response = $this->curl($opts);
+
+        $this->load($response);
+
+        $this->token = $this->xpath->evaluate('string(//meta[@name="__AjaxRequestVerificationToken"]/@content)');
+
         return true;
+    }
+
+    public function profile($profile)
+    {
+        $opts = array(
+            CURLOPT_URL => $this->url . '/LoginMain/Account/JsonActivateProfile',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => array(
+                'profileCode' => $profile,
+            ),
+        );
+
+        return $this->curl($opts);
     }
 
     public function accounts()
     {
         $opts = array(
-            CURLOPT_URL => self::URL . '/accounts_list.aspx',
+            CURLOPT_URL => $this->url . '/Accounts/Accounts/List',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => array(),
         );
-        $this->curl($opts);
+
+        $response = $this->curl($opts);
 
         $accounts = array();
 
-        $nodes = $this->xpath->query('//div[@id="AccountsGrid"]/ul/li[p[@class="Account"]/a]');
-
-        foreach ($nodes as $node) {
-            $onclick = $this->xpath->evaluate('string(p[@class="Amount"]/a/@onclick)', $node);
-            preg_match("/'POST','(?<parameters>[^']+)'/", $onclick, $matches);
-            $parameters = $matches['parameters'];
-
-            $name = $this->xpath->evaluate('string(p[@class="Account"]/a)', $node);
-            $iban = preg_replace('/[^\d]/', '', $name);
-            $name = preg_replace('/[\d ]{26,}/', '', $name);
-
-            $value = $this->xpath->evaluate('string(p[@class="Amount"]/span)', $node);
-            preg_match('/ (?<currency>\w{3})$/', $value, $matches);
-            $currency = $matches['currency'];
-            $value = self::tofloat($value);
-
-            $balance = $this->xpath->evaluate('string(p[@class="Amount"]/a)', $node);
-            $balance = self::tofloat($balance);
-
-            $accounts[$iban] = array(
-                'name' => $name,
-                'iban' => $iban,
-                'value' => $value,
-                'balance' => $balance,
-                'currency' => $currency,
-                'operations_params' => array(
-                    '__PARAMETERS' => $parameters,
-                    '__STATE' => $this->xpath->evaluate('string(//input[@name="__STATE"]/@value)'),
-                    '__VIEWSTATE' => $this->xpath->evaluate('string(//input[@name="__VIEWSTATE"]/@value)'),
-                ),
-            );
+        foreach ($response['properties'] as $key => $property) {
+            if (in_array($key, array('CurrentAccountsList', 'SavingAccountsList'))) {
+                foreach ($property as $account) {
+                    $accounts[$account['cID']] = array(
+                        'profile' => $response['properties']['profile'],
+                        'name' => $account['cProductName'],
+                        'iban' => $account['cAccountNumberForDisp'],
+                        'value' => $account['mAvailableBalance'],
+                        'balance' => $account['mBalance'],
+                        'currency' => $account['cCurrency'],
+                    );
+                }
+            }
         }
 
         return $accounts;
     }
 
-    public function operations($account)
+    public function operations($iban)
     {
         $opts = array(
-            CURLOPT_URL => self::URL . '/account_oper_list.aspx',
+            CURLOPT_URL => $this->url . '/MyDesktop/Desktop/SetNavigationToAccountHistory',
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $account['operations_params'],
+            CURLOPT_POSTFIELDS => array(
+                'accountNumber' => $iban,
+            ),
         );
+
         $this->curl($opts);
+
+        $opts = array(
+            CURLOPT_URL => $this->url . '/Pfm/TransactionHistory',
+        );
+
+        $response = $this->curl($opts);
+
+        // http://php.net/manual/en/domdocument.loadhtml.php#95251
+        $this->load('<?xml encoding="UTF-8">' . $response);
+
+        $nodes = $this->xpath->query('//ul[@class="content-list-body"]/li/header');
 
         $operations = array();
 
-        $nodes = $this->xpath->query('//div[@id="account_operations"]/ul/li[p[@class="Date"]/span]');
-
         foreach ($nodes as $node) {
-            $type = $this->xpath->evaluate('string(p[@class="OperationDescription"]/a)', $node);
-            $type = trim($type);
-
-            $spans = $this->xpath->evaluate('count(p[@class="OperationDescription"]/span)', $node);
-
-            if ($spans == 3) {
-                $name = '';
-                $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
-                $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
-            } elseif ($spans == 4) {
-                $name = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[1])', $node);
-                $iban = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[2])', $node);
-                $title = $this->xpath->evaluate('string(p[@class="OperationDescription"]/span[3])', $node);
-            } else {
-                $name = '';
-                $iban = '';
-                $title = '';
-            }
-
-            $title = trim($title);
-            $title = preg_replace('/\s{2,}/', "\n", $title);
-            $iban = preg_replace('/[^\d]/', '', $iban);
-
-            $value = $this->xpath->evaluate('string(p[@class="Amount"][1]/span)', $node);
-            preg_match('/ (?<currency>\w{3})$/', $value, $matches);
-            $currency = $matches['currency'];
-            $value = self::tofloat($value);
-
-            $balance = $this->xpath->evaluate('string(p[@class="Amount"][2]/span)', $node);
-            $balance = self::tofloat($balance);
-
-            $created = $this->xpath->evaluate('string(p[@class="Date"]/span[1])', $node);
-            $created = date('Y-m-d', strtotime($created));
-
-            $released = $this->xpath->evaluate('string(p[@class="Date"]/span[2])', $node);
-            $released = date('Y-m-d', strtotime($released));
-
-            $operations[] = compact(
-                'type',
-                'name',
-                'title',
-                'iban',
-                'value',
-                'balance',
-                'currency',
-                'created',
-                'released'
-            );
+            $operations[] = array_map('trim', array(
+                'type' => $this->xpath->evaluate('string(div[@class="column type"])', $node),
+                'date' => $this->xpath->evaluate('string(div[@class="column date"])', $node),
+                'description' => $this->xpath->evaluate('string(div[@class="column description"]/span/span)', $node),
+                'category' => $this->xpath->evaluate('string(div[@class="column category"]/div[1]/span)', $node),
+                'amount' => self::tofloat($this->xpath->evaluate('string(div[@class="column amount"]/strong)', $node)),
+            ));
         }
 
         return $operations;
@@ -189,19 +165,30 @@ class Mbank
     public function logout()
     {
         $opts = array(
-            CURLOPT_URL => self::URL . '/logout.aspx',
+            CURLOPT_URL => $this->url . '/Account/Logout',
         );
-        $this->curl($opts);
+
+        return @$this->curl($opts);
     }
 
     public function setopt($opts)
     {
-        $this->opts = $opts + $this->opts;
+        $this->opts += $opts;
     }
 
     protected function curl($opts)
     {
         $opts += $this->opts;
+
+        if (isset($this->token)) {
+            // seems like value of this doesn't matter
+            $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
+        }
+
+        if (isset($this->tab)) {
+            // seems like it has to be the same as the one in cookie but value doesn't matter
+            $opts[CURLOPT_HTTPHEADER][] = "X-Tab-Id: {$this->tab}";
+        }
 
         curl_setopt_array($this->curl, $opts);
 
@@ -213,18 +200,15 @@ class Mbank
 
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
-        if ($code != 200) {
+        if ($code !== 200) {
             throw new \Exception("curl() failed - HTTP Status Code {$code}");
         }
 
-        list($headers, $html) = explode("\r\n\r\n", $response, 2);
-
-        // NOTE I don't want to use CURLOPT_COOKIEFILE
-        if (preg_match_all('/Set-Cookie: (?<cookie>.*);/U', $headers, $matches)) {
-            $this->cookie = implode(';', $matches['cookie']);
+        if ($json = json_decode($response, true)) {
+            return $json;
+        } else {
+            return $response;
         }
-
-        return $this->load($html);
     }
 
     protected function load($html)
@@ -236,18 +220,6 @@ class Mbank
         $this->xpath = new \DOMXPath($this->document);
         //$this->xpath->registerNamespace('php', 'http://php.net/xpath');
         //$this->xpath->registerPHPFunctions(array('preg_match'));
-
-        $nosession = $this->xpath->evaluate('string(//div[@id="errorView"][@class="error noSession"]/fieldset/p[@class="message"])');
-
-        if ($nosession) {
-            throw new \Exception($nosession);
-        }
-
-        //$error = $this->xpath->evaluate('string(//div[@id="errorView"]/fieldset/p[@class="message"])');
-        //if ($error) {
-        //    throw new \Exception($error);
-        //}
-        return true;
     }
 
     protected static function tofloat($string)
