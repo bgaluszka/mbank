@@ -26,7 +26,7 @@ class Mbank
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_CAINFO => dirname(dirname(__DIR__)) . '/crt/cacert.pem',
+            CURLOPT_CAINFO => dirname(dirname(dirname(__DIR__))) . '/crt/cacert.pem',
             CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1,
             // http://blog.volema.com/curl-rce.html
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
