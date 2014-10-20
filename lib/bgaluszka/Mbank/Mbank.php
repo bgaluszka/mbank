@@ -133,17 +133,19 @@ class Mbank
         return $accounts;
     }
 
-    public function operations($iban)
+    public function operations($iban = null)
     {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/MyDesktop/Desktop/SetNavigationToAccountHistory',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => array(
-                'accountNumber' => $iban,
-            ),
-        );
+        if ($iban) {
+            $opts = array(
+                CURLOPT_URL => $this->url . '/MyDesktop/Desktop/SetNavigationToAccountHistory',
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => array(
+                    'accountNumber' => $iban,
+                ),
+            );
 
-        $this->curl($opts);
+            $this->curl($opts);
+        }
 
         $opts = array(
             CURLOPT_URL => $this->url . '/Pfm/TransactionHistory',
@@ -154,18 +156,20 @@ class Mbank
         // http://php.net/manual/en/domdocument.loadhtml.php#95251
         $this->load('<?xml encoding="UTF-8">' . $response);
 
-        $nodes = $this->xpath->query('//ul[@class="content-list-body"]/li/header');
+        $nodes = $this->xpath->query('//ul[@class="content-list-body"]/li');
 
         $operations = array();
 
         foreach ($nodes as $node) {
-            $operations[] = array_map('trim', array(
-                'type' => $this->xpath->evaluate('string(div[@class="column type"])', $node),
-                'date' => $this->xpath->evaluate('string(div[@class="column date"])', $node),
-                'description' => $this->xpath->evaluate('string(div[@class="column description"]/span/span)', $node),
-                'category' => $this->xpath->evaluate('string(div[@class="column category"]/div[1]/span)', $node),
-                'value' => self::tofloat($this->xpath->evaluate('string(div[@class="column amount"]/strong)', $node)),
-            ));
+            $operations[] = array(
+                'id' => $this->xpath->evaluate('string(@data-id)', $node),
+                'type' => trim($this->xpath->evaluate('string(header/div[@class="column type"])', $node)),
+                'released' => date('Y-m-d', strtotime($this->xpath->evaluate('string(header/div[@class="column date"])', $node))),
+                'title' => trim($this->xpath->evaluate('string(header/div[@class="column description"]/span/span/@data-original-title)', $node)),
+                'category' => trim($this->xpath->evaluate('string(header/div[@class="column category"]/div[1]/span)', $node)),
+                'value' => self::tofloat($this->xpath->evaluate('string(header/div[@class="column amount"]/strong)', $node)),
+                'currency' => $this->xpath->evaluate('string(@data-currency)', $node),
+            );
         }
 
         return $operations;
@@ -177,7 +181,7 @@ class Mbank
             CURLOPT_URL => $this->url . '/Account/Logout',
         );
 
-        return @$this->curl($opts);
+        return $this->curl($opts);
     }
 
     public function setopt($opts)
