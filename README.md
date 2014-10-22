@@ -5,7 +5,7 @@ Suitable for checking for new transactions. Implemented methods:
 
 * login
 * list accounts
-* list operations (last ~14 days)
+* list last operations
 * logout
 
 Requirements
@@ -45,7 +45,7 @@ foreach (array('individual', 'business') as $profile) {
         echo "{$account['name']} {$account['value']} {$account['currency']}\n";
 
         foreach ($mbank->operations($account['iban']) as $operation) {
-            echo "{$operation['description']} {$operation['value']} {$account['currency']}\n";
+            echo "{$operation['title']} {$operation['value']} {$operation['currency']}\n";
         }
     }
 }
