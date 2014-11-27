@@ -133,7 +133,7 @@ class Mbank
         return $accounts;
     }
 
-    public function operations($iban = null)
+    public function operations($iban = null, $criteria = array())
     {
         if ($iban) {
             $opts = array(
@@ -155,6 +155,35 @@ class Mbank
 
         // http://php.net/manual/en/domdocument.loadhtml.php#95251
         $this->load('<?xml encoding="UTF-8">' . $response);
+
+        if ($criteria) {
+            $nodes = $this->xpath->query('//input[@name="ProductIds[]"][@checked]');
+
+            $products = array();
+
+            foreach ($nodes as $node) {
+                $products[] = $this->xpath->evaluate('string(@value)', $node);
+            }
+
+            if ($products) {
+                $criteria = array_merge(array(
+                    'ProductIds' => $products,
+                ), $criteria);
+
+                $criteria = json_encode($criteria);
+
+                $opts = array(
+                    CURLOPT_URL => $this->url . '/Pfm/TransactionHistory/TransactionList',
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => $criteria,
+                    CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+                );
+
+                $response = $this->curl($opts);
+
+                $this->load('<?xml encoding="UTF-8">' . $response);
+            }
+        }
 
         $nodes = $this->xpath->query('//ul[@class="content-list-body"]/li');
 
