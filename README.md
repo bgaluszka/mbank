@@ -1,4 +1,5 @@
-= Library for accessing mBank PL transaction service
+Library for accessing mBank PL transaction service
+--------------------------------------------------
 
 Suitable for checking for new transactions. Implemented methods:
 
@@ -7,12 +8,14 @@ Suitable for checking for new transactions. Implemented methods:
 * list last operations
 * logout
 
-= Requirements
+Requirements
+------------
 
 * PHP 5.3 or higher
 * [cURL](http://www.php.net/manual/book.curl.php) extension
 
-= Installation
+Installation
+------------
 
 Install library from composer:
 
@@ -24,9 +27,11 @@ Install library from composer:
 }
 ```
 
-= Example usage
+Example usage
+-------------
 
-== Recent operations on all accounts
+Recent operations for all accounts
+==================================
 
 ```php
 <?php
@@ -51,7 +56,8 @@ foreach (array('individual', 'business') as $profile) {
 $mbank->logout();
 ```
 
-== Search account
+Search account
+==============
 
 ```php
 <?php
