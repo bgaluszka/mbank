@@ -4,7 +4,7 @@ Suitable for checking for new transactions. Implemented methods:
 
 * login
 * list accounts
-* list last operations
+* list recent operations
 * logout
 
 ## Requirements
