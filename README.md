@@ -66,7 +66,7 @@ $operations = $mbank->operations('00 1111 2222 3333 4444 5555 6666', array(
     'AmountTo' => 10000.01,
     'periodFrom' => '01.01.2014',
     'periodTo' => '31.12.2014',
-    // 1 page contains about 25 operations, set it to 2 to get 50
+    // 1 page contains about 25 operations, set it to 2 to get 50, 3 to 75 and so on
     'pagesCount' => 2,
 ));
 
