@@ -215,7 +215,7 @@ class Mbank
 
     public function setopt($opts)
     {
-        $this->opts += $opts;
+        $this->opts = $opts + $this->opts;
     }
 
     protected function curl($opts)
