@@ -204,6 +204,89 @@ class Mbank
         return $operations;
     }
 
+    public function export($params = array())
+    {
+        $opts = array(
+            CURLOPT_URL => 'https://online.mbank.pl/csite/account_oper_list.aspx',
+        );
+
+        $response = $this->curl($opts);
+
+        $this->load($response);
+
+        $form = $this->xpath->query('//form[@id="MainForm"]')->item(1);
+
+        $params = array(
+            '__PARAMETERS' => $this->xpath->evaluate('string(.//input[@name="__PARAMETERS"]/@value)', $form),
+            '__STATE' => $this->xpath->evaluate('string(.//input[@name="__STATE"]/@value)', $form),
+            '__VIEWSTATE' => $this->xpath->evaluate('string(.//input[@name="__VIEWSTATE"]/@value)', $form),
+            '__EVENTVALIDATION' => $this->xpath->evaluate('string(.//input[@name="__EVENTVALIDATION"]/@value)', $form),
+        ) + $params;
+
+        $params += array(
+            'rangepanel_group' => 'daterange_radio',
+            'daterange_from_day' => '1',
+            'daterange_from_month' => date('m'),
+            'daterange_from_year' => date('Y'),
+            'daterange_to_day' => date('d'),
+            'daterange_to_month' => date('m'),
+            'daterange_to_year' => date('Y'),
+            'accoperlist_typefilter_group' => 'ALL000000',
+            'accoperlist_amountfilter_amountmin' => '',
+            'accoperlist_amountfilter_amountmax' => '',
+            'accoperlist_title_title' => '',
+            'accoperlist_nameaddress_nameAddress' => '',
+            'accoperlist_account_account' => '',
+            'accoperlist_KS_KS' => '',
+            'accoperlist_VS_VS' => '',
+            'accoperlist_SS_SS' => '',
+            'export_oper_history_check' => 'on',
+            'export_oper_history_format' => 'CSV',
+        );
+
+        $accoperlist_typefilter_group = array(
+            'ALL000000' => 'Wszystkie',
+            'ABO000000' => 'Uznania rachunku',
+            'CAR000000' => 'Obciążenia rachunku',
+            'TRI111000' => 'Przelewy przychodzące',
+            'TRO111000' => 'Przelewy wychodzące',
+            'TIH111000' => 'Przelewy własne',
+            'TUS111000' => 'Przelewy podatkowe',
+            'TRZ101000' => 'Przelewy do ZUS',
+            'LDS100000' => 'Operacje kartowe',
+            'CRE100000' => 'Operacje na kredycie',
+            'CAI100000' => 'Wpłaty gotówkowe',
+            'CAO100000' => 'Wypłaty gotówkowe',
+            'INT000000' => 'Kapitalizacja odsetek',
+            'COM100000' => 'Prowizje i opłaty',
+            'TDI111000' => 'Przelew z/na r-ek brokerski',
+            'TFX111000' => 'Transakcje walutowe',
+            'TRS000000' => 'Regularne oszczędzanie',
+        );
+
+        if (!isset($accoperlist_typefilter_group[$params['accoperlist_typefilter_group']])) {
+            throw new \InvalidArgumentException('Invalid accoperlist_typefilter_group parameter');
+        }
+
+        $export_oper_history_format = array(
+            'CSV' => 'CSV',
+            'HTML' => 'HTML',
+            'PDF' => 'PDF',
+        );
+
+        if (!isset($export_oper_history_format[$params['export_oper_history_format']])) {
+            throw new \InvalidArgumentException('Invalid export_oper_history_format parameter');
+        }
+
+        $opts = array(
+            CURLOPT_URL => 'https://online.mbank.pl/csite/printout_oper_list.aspx',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($params),
+        );
+
+        return $this->curl($opts);
+    }
+
     public function logout()
     {
         $opts = array(
