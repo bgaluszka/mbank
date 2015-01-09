@@ -62,6 +62,7 @@ $mbank = new \bgaluszka\Mbank\Mbank();
 $mbank->login('id', 'password');
 
 $operations = $mbank->operations('00 1111 2222 3333 4444 5555 6666', array(
+    'SearchText' => 'Tytuł przelewu',
     'AmountFrom' => -10000.01,
     'AmountTo' => 10000.01,
     'periodFrom' => '01.01.2014',
