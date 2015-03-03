@@ -14,7 +14,7 @@ class Mbank
 
     protected $opts = array();
 
-    public $url = 'https://online.mbank.pl/pl';
+    public $url = 'https://online.mbank.pl';
 
     public function __construct()
     {
@@ -47,12 +47,12 @@ class Mbank
     public function login($username, $password)
     {
         $opts = array(
-            CURLOPT_URL => $this->url . '/Login',
+            CURLOPT_URL => $this->url . '/pl/Login',
         );
         $response = $this->curl($opts);
 
         $opts = array(
-            CURLOPT_URL => $this->url . '/Account/JsonLogin',
+            CURLOPT_URL => $this->url . '/pl/Account/JsonLogin',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
                 'UserName' => $username,
@@ -70,7 +70,7 @@ class Mbank
         $this->tab = $response['tabId'];
 
         $opts = array(
-            CURLOPT_URL => $this->url,
+            CURLOPT_URL => $this->url . '/pl',
         );
         $response = $this->curl($opts);
 
@@ -93,7 +93,7 @@ class Mbank
         }
 
         $opts = array(
-            CURLOPT_URL => $this->url . '/LoginMain/Account/JsonActivateProfile',
+            CURLOPT_URL => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
                 'profileCode' => $profiles[$profile],
@@ -106,7 +106,7 @@ class Mbank
     public function accounts()
     {
         $opts = array(
-            CURLOPT_URL => $this->url . '/Accounts/Accounts/List',
+            CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(),
         );
@@ -137,7 +137,7 @@ class Mbank
     {
         if ($iban) {
             $opts = array(
-                CURLOPT_URL => $this->url . '/MyDesktop/Desktop/SetNavigationToAccountHistory',
+                CURLOPT_URL => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => array(
                     'accountNumber' => $iban,
@@ -148,7 +148,7 @@ class Mbank
         }
 
         $opts = array(
-            CURLOPT_URL => $this->url . '/Pfm/TransactionHistory',
+            CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory',
         );
 
         $response = $this->curl($opts);
@@ -173,7 +173,7 @@ class Mbank
                 $criteria = json_encode($criteria);
 
                 $opts = array(
-                    CURLOPT_URL => $this->url . '/Pfm/TransactionHistory/TransactionList',
+                    CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
                     CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $criteria,
                     CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
@@ -204,10 +204,10 @@ class Mbank
         return $operations;
     }
 
-    public function export($params = array())
+    public function export($iban, $params = array())
     {
         $opts = array(
-            CURLOPT_URL => 'https://online.mbank.pl/csite/account_oper_list.aspx',
+            CURLOPT_URL => $this->url . '/csite/account_oper_list.aspx',
         );
 
         $response = $this->curl($opts);
@@ -216,8 +216,26 @@ class Mbank
 
         $form = $this->xpath->query('//form[@id="MainForm"]')->item(1);
 
+        $nodes = $this->xpath->query('//select[@id="MenuAccountsCombo"]/option');
+
+        $ibans = array();
+
+        foreach ($nodes as $node) {
+            $option = preg_replace('/[^\d]/', '', $node->textContent);
+            $value = $this->xpath->evaluate('string(@value)', $node);
+
+            $ibans[$option] = $value;
+        }
+
+        $iban = preg_replace('/[^\d]/', '', $iban);
+
+        if (!isset($ibans[$iban])) {
+            throw new \InvalidArgumentException('Invalid IBAN');
+        }
+
         $params = array(
-            '__PARAMETERS' => $this->xpath->evaluate('string(.//input[@name="__PARAMETERS"]/@value)', $form),
+            //'__PARAMETERS' => $this->xpath->evaluate('string(.//input[@name="__PARAMETERS"]/@value)', $form),
+            '__PARAMETERS' => $ibans[$iban],
             '__STATE' => $this->xpath->evaluate('string(.//input[@name="__STATE"]/@value)', $form),
             '__VIEWSTATE' => $this->xpath->evaluate('string(.//input[@name="__VIEWSTATE"]/@value)', $form),
             '__EVENTVALIDATION' => $this->xpath->evaluate('string(.//input[@name="__EVENTVALIDATION"]/@value)', $form),
@@ -279,7 +297,7 @@ class Mbank
         }
 
         $opts = array(
-            CURLOPT_URL => 'https://online.mbank.pl/csite/printout_oper_list.aspx',
+            CURLOPT_URL => $this->url . '/csite/printout_oper_list.aspx',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query($params),
         );
@@ -290,7 +308,7 @@ class Mbank
     public function logout()
     {
         $opts = array(
-            CURLOPT_URL => $this->url . '/Account/Logout',
+            CURLOPT_URL => $this->url . '/pl/Account/Logout',
         );
 
         return $this->curl($opts);
