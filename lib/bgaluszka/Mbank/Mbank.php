@@ -178,7 +178,10 @@ class Mbank
                     CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
                     CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $criteria,
-                    CURLOPT_HTTPHEADER => array('Content-Type: application/json'),
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: application/json',
+                        'X-Requested-With: XMLHttpRequest',
+                    ),
                 );
 
                 $response = $this->curl($opts);
