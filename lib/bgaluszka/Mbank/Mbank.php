@@ -143,6 +143,7 @@ class Mbank
                 CURLOPT_POSTFIELDS => array(
                     'accountNumber' => $iban,
                 ),
+                CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
             );
 
             $this->curl($opts);
