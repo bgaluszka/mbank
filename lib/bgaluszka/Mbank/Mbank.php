@@ -109,6 +109,7 @@ class Mbank
             CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(),
+            CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
         );
 
         $response = $this->curl($opts);
