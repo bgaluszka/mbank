@@ -310,6 +310,217 @@ class Mbank
         return $this->curl($opts);
     }
 
+    public function contacts()
+    {
+        $opts = array(
+            CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactListForAddressBook',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => '',
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'X-Requested-With: XMLHttpRequest',
+            ),
+        );
+
+        $response = $this->curl($opts);
+        $response = isset($response['records']) ? $response['records'] : [];
+        $response = array_filter($response, function($contact) {
+            return !empty($contact['transfers']);
+        });
+
+        return $response;
+    }
+
+    public function contact_details($contact_id)
+    {
+        $params = array(
+            'contactId' => $contact_id,
+        );
+        $params = json_encode($params);
+
+        $opts = array(
+            CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactDetails',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $params,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'X-Requested-With: XMLHttpRequest',
+            ),
+        );
+
+        $response = $this->curl($opts);
+
+        return $response;
+    }
+
+    public function transfer_prepare($contact_id, $transfer_id, $amount = null, $title = null)
+    {
+        trigger_error('Experimental feature');
+
+        $params = array(
+            'extraFormData' => null,
+            'recipientId' => $contact_id,
+            'templateId' => $transfer_id,
+        );
+        $params = json_encode($params);
+
+        $opts = array(
+            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $params,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'X-Requested-With: XMLHttpRequest',
+            ),
+        );
+
+        $response = $this->curl($opts);
+
+        $amount = $amount ?: $response['formData']['amount'];
+        $title = $title ?: $response['formData']['title'];
+
+        if (empty($amount) || !is_numeric($amount)) {
+            throw new \InvalidArgumentException('Invalid amount');
+        }
+
+        if (empty($title)) {
+            throw new \InvalidArgumentException('Invalid title');
+        }
+
+        //foreach ($response['formData']['defaultData']['availableFromAccounts'] as $fromAccount) {
+        //    if ($fromAccount['number'] === $response['formData']['defaultData']['fromAccount']) {
+        //        break;
+        //    } else {
+        //        unset($fromAccount);
+        //    }
+        //}
+
+        $formData = array(
+            //'accountParams' => $fromAccount['accountParams'],
+            //'additionalOptions' => $response['formData']['additionalOptions'],
+            'additionalOptions' => [
+                'sendConfirmation' => false,
+                //'sendConfirmationOptions' => ['example@example.com'],
+                'sendSmsOnFail' => false,
+            ],
+            //'address' => $response['formData']['address'],
+            //'addToBasket' => $response['formData']['addToBasket'],
+            'amount' => $amount,
+            //'BIC' => null,
+            //'changedFromAcc' => false,
+            //'currencies' => $response['formData']['defaultData']['currency'],
+            'currency' => $response['formData']['defaultData']['currency'],
+            'date' => $response['formData']['defaultData']['date'],
+            //'deactivateDateField' => false,
+            'deliveryTime' => $response['formData']['activeTransferMode'],
+            //'deliveryTimeUpdate' => [
+            //    $response['formData']['activeTransferMode'] => $response['formData']['transferModes'][$response['formData']['activeTransferMode']],
+            //],
+            //'dtmsg' => $response['formData']['transferModes'][$response['formData']['activeTransferMode']]['doneTime'],
+            //'formType' => $response['formData']['formType'],
+            'fromAccount' => $response['formData']['defaultData']['fromAccount'],
+            //'isDefined' => $response['formData']['defaultData']['isDefined'],
+            //'isFutureDate' => false,
+            //'isRepeatableTransfer' => '',
+            //'isSeriesOfTransfers' => '',
+            //'isTrusted' => $response['formData']['isTrusted'],
+            //'lastCheckedValues' => [
+            //    'amount' => $amount,
+            //    'currencies' => $response['formData']['defaultData']['currency'],
+            //    'date' => $response['formData']['defaultData']['date'],
+            //    'fromAccount' => $response['formData']['defaultData']['fromAccount'],
+            //    'isDefined' => $response['formData']['defaultData']['isDefined'],
+            //    'isTrusted' => $response['formData']['isTrusted'],
+            //    'toAccount' => $response['formData']['toAccount'],
+            //],
+            //'perfToken' => $response['formData']['perfToken'],
+            //'recipientName' => $response['formData']['defaultData']['recipientName'],
+            //'repeatableTransfer' => [
+            //    'calendarMessages' => '',
+            //    'calendars' => [
+            //        'dateFrom' => $response['formData']['defaultData']['date'],
+            //        'dateTo' => $response['formData']['defaultData']['date'],
+            //    ],
+            //    'repeatRow' => [
+            //        'period' => 'm',
+            //        'untilFurtherNotice' => true,
+            //        'value' => '1',
+            //    ],
+            //],
+            //'sender' => $fromAccount['activeCoownerId'],
+            //'seriesOfTransfers' => [[
+            //    'amount' => $amount,
+            //    'date' => $response['formData']['defaultData']['date'],
+            //    'title' => $title,
+            //]],
+            //'showRepeatFromBasketWarning' => false,
+            //'srcAccChangeToTemplate' => false,
+            //'submitButtons' => [
+            //    'addToBasket' => '',
+            //    'cancel' => '',
+            //    'submit' => '',
+            //],
+            //'templateId' => $transfer_id,
+            'title' => $title,
+            'toAccount' => $response['formData']['toAccount'],
+        );
+
+        $params = array(
+            'formData' => $formData,
+            'recipientId' => $contact_id,
+            'templateId' => $transfer_id,
+        );
+        $params = json_encode($params);
+
+        $opts = array(
+            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $params,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'X-Requested-With: XMLHttpRequest',
+            ),
+        );
+
+        $response = $this->curl($opts);
+
+        if ($response['authType'] !== 'none') {
+            throw new \InvalidArgumentException('Invalid client_id, requires authorization');
+        }
+
+        //if ($amount > $response['summaryData']['additionalInfo']['fromAccount']['balance']) {
+        //    throw new \InvalidArgumentException('Invalid amount, exceeds balance');
+        //}
+
+        return $formData;
+    }
+
+    public function transfer_submit($contact_id, $transfer_id, $transfer)
+    {
+        trigger_error('Experimental feature');
+
+        $params = array(
+            'formData' => $transfer,
+            'recipientId' => $contact_id,
+            'templateId' => $transfer_id,
+        );
+        $params = json_encode($params);
+
+        $opts = array(
+            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $params,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'X-Requested-With: XMLHttpRequest',
+            ),
+        );
+
+        $response = $this->curl($opts);
+
+        return (isset($response['summary']['fromAccount']) && (isset($response['summary']['toAccount'])));
+    }
+
     public function logout()
     {
         $opts = array(
