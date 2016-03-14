@@ -89,7 +89,7 @@ class Mbank
         );
 
         if (!isset($profiles[$profile])) {
-            throw new \Exception('Invalid profile (individual|business)');
+            throw new \InvalidArgumentException('Invalid profile (individual|business)');
         }
 
         $opts = array(
