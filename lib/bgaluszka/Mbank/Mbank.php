@@ -342,21 +342,27 @@ class Mbank
 
         $response = curl_exec($this->curl);
 
-        if (curl_errno($this->curl)) {
-            throw new \Exception('curl() failed - ' . curl_error($this->curl));
+        if ($json = json_decode($response, true)) {
+            $response = $json;
+        }
+
+        if ($error = curl_error($this->curl)) {
+            throw new \Exception("curl() failed - {$error}");
         }
 
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
         if ($code >= 400) {
-            throw new \Exception("curl() failed - HTTP Status Code {$code}");
+            $exception = "curl() failed - HTTP Status Code {$code}";
+
+            if (isset($response['message'])) {
+                $exception = "{$exception} ({$message})";
+            }
+
+            throw new \Exception($exception);
         }
 
-        if ($json = json_decode($response, true)) {
-            return $json;
-        } else {
-            return $response;
-        }
+        return $response;
     }
 
     protected function load($html)
