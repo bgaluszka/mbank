@@ -324,9 +324,9 @@ class Mbank
 
         $response = $this->curl($opts);
         $response = isset($response['records']) ? $response['records'] : [];
-        $response = array_filter($response, function($contact) {
-            return !empty($contact['transfers']);
-        });
+        //$response = array_filter($response, function($contact) {
+        //    return !empty($contact['transfers']);
+        //});
 
         return $response;
     }
@@ -386,14 +386,6 @@ class Mbank
         if (empty($title)) {
             throw new \InvalidArgumentException('Invalid title');
         }
-
-        //foreach ($response['formData']['defaultData']['availableFromAccounts'] as $fromAccount) {
-        //    if ($fromAccount['number'] === $response['formData']['defaultData']['fromAccount']) {
-        //        break;
-        //    } else {
-        //        unset($fromAccount);
-        //    }
-        //}
 
         $formData = array(
             //'accountParams' => $fromAccount['accountParams'],
@@ -519,6 +511,43 @@ class Mbank
         $response = $this->curl($opts);
 
         return (isset($response['summary']['fromAccount']) && (isset($response['summary']['toAccount'])));
+    }
+
+    public function transfer($iban, $amount, $title = 'Przelew środków')
+    {
+        trigger_error('Experimental feature');
+
+        foreach ($this->contacts() as $contact) {
+            if ($contact = $this->contact_details($contact['id'])) {
+                foreach ($contact['transfers'] as $transfer) {
+                    if ($transfer['isTrusted']) {
+                        if (isset($transfer['receiverAccountNumber'])) {
+                            $receiver = $transfer['receiverAccountNumber'];
+                        } elseif ($transfer['departmentAccountNumber']) {
+                            $receiver = $transfer['departmentAccountNumber'];
+                        } else {
+                            $receiver = null;
+                        }
+
+                        if ($receiver) {
+                            $receiver = preg_replace('/[^\d]/', '', $receiver);
+                            $iban = preg_replace('/[^\d]/', '', $iban);
+
+                            if ($receiver === $iban) {
+                                $data = $this->transfer_prepare($contact['contactId'], $transfer['id'], $amount, $title);
+
+                                //$data['additionalOptions']['sendConfirmation'] = true;
+                                //$data['additionalOptions']['sendConfirmationOptions'] = ['bgaluszka@kint.pl'];
+
+                                return $this->transfer_submit($contact['contactId'], $transfer['id'], $data);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     public function logout()
