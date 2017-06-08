@@ -32,7 +32,7 @@ class Mbank
             CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
             CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
             // http://stackoverflow.com/a/1490482
-            CURLOPT_COOKIEJAR => '/dev/null',
+            CURLOPT_COOKIEJAR  => (PHP_OS === 'Windows') ? 'null' : '/dev/null',
         );
 
         $this->document = new \DOMDocument('1.0', 'UTF-8');
