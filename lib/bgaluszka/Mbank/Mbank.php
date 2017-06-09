@@ -11,6 +11,21 @@ namespace bgaluszka\Mbank;
  */
 class Mbank
 {
+	const TRANS_ALL              = 'ALL000000'; // Wszystkie
+	const TRANS_ARRIVED          = 'ABO000000'; // Uznania rachunku
+	const TRANS_SENT             = 'CAR000000'; // Obciążenia rachunku
+	const TRANS_OUTGOING         = 'TRO111000'; // Przelewy wychodzące
+	const TRANS_INCOMING         = 'TRI111000'; // Przelewy przychodzące
+	const TRANS_OWN              = 'TIH111000'; // Przelewy własne
+	const TRANS_IRS              = 'TUS111000'; // Przelewy podatkowe
+	const TRANS_ZUS              = 'TRZ101000'; // Przelewy do ZUS
+	const TRANS_CARD_TRANSACTION = 'LDS100000'; // Operacje kartowe
+	const TRANS_CASH_DEPOSIT     = 'CAI100000'; // Wpłaty gotówkowe
+	const TRANS_CASH_WITHDRAWAL  = 'CAO100000'; // Wypłaty gotówkowe
+	const TRANS_INTEREST         = 'INT000000'; // Kapitalizacja odsetek
+	const TRANS_FEES             = 'COM100000'; // Prowizje i opłaty
+
+
 	/**
 	 * Corporate account type
 	 */
@@ -270,7 +285,7 @@ class Mbank
     }
 
 	/**
-	 * @param string $iban
+	 * @param string $iban IBAN of account you want to export
 	 * @param array  $params
 	 *
 	 * @return array
@@ -333,38 +348,25 @@ class Mbank
             'export_oper_history_format' => 'CSV',
         );
 
-	    const TRANS_ALL   = 'ALL000000'; // Wszystkie
-	    const TRANS_ARRIVED   = 'ABO000000';  // Uznania rachunku
-	    const TRANS_SENT   = 'CAR000000';  // Obciążenia rachunku
-	    const TRANS_OUTGOING   = 'TRI111000';  // Przelewy przychodzące
-	    const TRANS_INCOMING   = 'TRO111000';  // Przelewy wychodzące
-	    const TRANS_OWN   = 'TIH111000';  // Przelewy własne
-	    const TRANS_IRS   = 'TUS111000';  // Przelewy podatkowe
-	    const TRANS_ZUS   = 'TRZ101000';  // Przelewy do ZUS
-	    const TRANS_CARDS   = 'LDS100000';  // Operacje kartowe
-	    const TRANS_CASH_DEPOSIT   = 'CAI100000';  // Wpłaty gotówkowe
-	    const TRANS_CASH_WITHDRAW   = 'CAO100000';  // Wypłaty gotówkowe
-	    const TRANS_INTEREST   = 'INT000000';  // Kapitalizacja odsetek
-	    const TRANS_FEES   = 'COM100000';  // Prowizje i opłaty
-
         $accoperlist_typefilter_group = array(
-            'ALL000000' => 'Wszystkie',
-            'ABO000000' => 'Uznania rachunku',
-            'CAR000000' => 'Obciążenia rachunku',
-            'TRI111000' => 'Przelewy przychodzące',
-            'TRO111000' => 'Przelewy wychodzące',
-            'TIH111000' => 'Przelewy własne',
-            'TUS111000' => 'Przelewy podatkowe',
-            'TRZ101000' => 'Przelewy do ZUS',
-            'LDS100000' => 'Operacje kartowe',
-            'CRE100000' => 'Operacje na kredycie',
-            'CAI100000' => 'Wpłaty gotówkowe',
-            'CAO100000' => 'Wypłaty gotówkowe',
-            'INT000000' => 'Kapitalizacja odsetek',
-            'COM100000' => 'Prowizje i opłaty',
-            'TDI111000' => 'Przelew z/na r-ek brokerski',
-            'TFX111000' => 'Transakcje walutowe',
-            'TRS000000' => 'Regularne oszczędzanie',
+	        self::TRANS_ALL => 'Wszystkie',
+	        self::TRANS_ARRIVED => 'Uznania rachunku',
+	        self::TRANS_SENT => 'Obciążenia rachunku',
+	        self::TRANS_INCOMING => 'Przelewy przychodzące',
+	        self::TRANS_OUTGOING => 'Przelewy wychodzące',
+	        self::TRANS_OWN => 'Przelewy własne',
+	        self::TRANS_IRS => 'Przelewy podatkowe',
+	        self::TRANS_ZUS => 'Przelewy do ZUS',
+	        self::TRANS_CARD_TRANSACTION => 'Operacje kartowe',
+	        self::TRANS_CASH_DEPOSIT => 'Wpłaty gotówkowe',
+	        self::TRANS_CASH_WITHDRAWAL => 'Wypłaty gotówkowe',
+	        self::TRANS_INTEREST => 'Kapitalizacja odsetek',
+	        self::TRANS_FEES => 'Prowizje i opłaty',
+	        'CRE100000' => 'Operacje na kredycie',
+	        'TDI111000' => 'Przelew z/na r-ek brokerski',
+	        'TFX111000' => 'Transakcje walutowe',
+	        'TRS000000' => 'Regularne oszczędzanie',
+
         );
 
         if (!isset($accoperlist_typefilter_group[$params['accoperlist_typefilter_group']])) {
