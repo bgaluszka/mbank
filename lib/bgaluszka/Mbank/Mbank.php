@@ -9,8 +9,8 @@ class Mbank
     /** @var string */
     protected $tab;
 
-    /** @var string */
-    protected $token;
+    /** @var string|null */
+    protected $token = null;
 
     /** @var \DOMDocument */
     protected $document;
@@ -352,16 +352,13 @@ class Mbank
 	 */
     public function contacts()
     {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactListForAddressBook',
-            CURLOPT_POSTFIELDS => '',
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'X-Requested-With: XMLHttpRequest',
-            ),
-        );
-
-        $response = $this->curl($opts);
+	    $response = $this->curl(array(
+		    CURLOPT_URL        => $this->url . '/pl/AddressBook/Data/GetContactListForAddressBook',
+		    CURLOPT_HTTPHEADER => array(
+			    'Content-Type: application/json',
+			    'X-Requested-With: XMLHttpRequest',
+		    ),
+	    ));
         $response = isset($response['records']) ? $response['records'] : [];
 
         return $response;
@@ -379,16 +376,14 @@ class Mbank
         );
         $params = json_encode($params);
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactDetails',
-            CURLOPT_POSTFIELDS => $params,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'X-Requested-With: XMLHttpRequest',
-            ),
-        );
-
-        $response = $this->curl($opts);
+	    $response = $this->curl(array(
+		    CURLOPT_URL        => $this->url . '/pl/AddressBook/Data/GetContactDetails',
+		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_HTTPHEADER => array(
+			    'Content-Type: application/json',
+			    'X-Requested-With: XMLHttpRequest',
+		    ),
+	    ));
 
         return $response;
     }
@@ -412,16 +407,14 @@ class Mbank
         );
         $params = json_encode($params);
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
-            CURLOPT_POSTFIELDS => $params,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'X-Requested-With: XMLHttpRequest',
-            ),
-        );
-
-        $response = $this->curl($opts);
+	    $response = $this->curl(array(
+		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
+		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_HTTPHEADER => array(
+			    'Content-Type: application/json',
+			    'X-Requested-With: XMLHttpRequest',
+		    ),
+	    ));
 
         $amount = $amount ?: $response['formData']['amount'];
         $title = $title ?: $response['formData']['title'];
@@ -511,16 +504,14 @@ class Mbank
         );
         $params = json_encode($params);
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
-            CURLOPT_POSTFIELDS => $params,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'X-Requested-With: XMLHttpRequest',
-            ),
-        );
-
-        $response = $this->curl($opts);
+	    $response = $this->curl($opts = array(
+		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
+		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_HTTPHEADER => array(
+			    'Content-Type: application/json',
+			    'X-Requested-With: XMLHttpRequest',
+		    ),
+	    ));
 
         if ($response['authType'] !== 'none') {
             throw new \InvalidArgumentException('Invalid client_id, requires authorization');
@@ -551,16 +542,14 @@ class Mbank
         );
         $params = json_encode($params);
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
-            CURLOPT_POSTFIELDS => $params,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'X-Requested-With: XMLHttpRequest',
-            ),
-        );
-
-        $response = $this->curl($opts);
+	    $response = $this->curl(array(
+		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
+		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_HTTPHEADER => array(
+			    'Content-Type: application/json',
+			    'X-Requested-With: XMLHttpRequest',
+		    ),
+	    ));
 
         return (isset($response['summary']['fromAccount']) && isset($response['summary']['toAccount']));
     }
@@ -613,14 +602,15 @@ class Mbank
 	/**
 	 * @return array
 	 */
-    public function logout()
-    {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/Account/Logout',
-        );
+	public function logout()
+	{
+		$this->token = null;
 
-        return $this->curl($opts);
-    }
+		return $this->curl(array(
+				CURLOPT_URL => $this->url . '/pl/Account/Logout',
+			)
+		);
+	}
 
 	/**
 	 * @param array $opts
@@ -645,7 +635,7 @@ class Mbank
 	    }
         $opts += $this->opts;
 
-        if (isset($this->token)) {
+        if ($this->token !== null) {
             // seems like value of this doesn't matter
             $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
         }
