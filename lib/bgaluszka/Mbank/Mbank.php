@@ -33,6 +33,9 @@ class Mbank
     public $url = 'https://online.mbank.pl';
 
 
+	/**
+	 * Mbank constructor.
+	 */
     public function __construct()
     {
         $this->curl = curl_init();
@@ -111,6 +114,8 @@ class Mbank
 	 * @param string $profile
 	 *
 	 * @return mixed
+	 *
+	 * @throws \InvalidArgumentException
 	 */
     public function profile($profile)
     {
@@ -138,6 +143,7 @@ class Mbank
 	 */
     public function accounts()
     {
+	    /** @var array $response */
         $response = $this->curl(array(
 	        CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
 	        CURLOPT_POSTFIELDS => array(),
@@ -148,7 +154,8 @@ class Mbank
 
         foreach ($response['properties'] as $key => $property) {
             if (in_array($key, array('CurrentAccountsList', 'SavingAccountsList'))) {
-                foreach ($property as $account) {
+            	/** @var array $property */
+	            foreach ($property as $account) {
                     $accounts[$account['cID']] = array(
                         'profile' => $response['properties']['profile'],
                         'name' => $account['cProductName'],
@@ -389,6 +396,8 @@ class Mbank
 	 * @param string|null $title
 	 *
 	 * @return array
+	 *
+	 * @throws \InvalidArgumentException
 	 */
     public function transfer_prepare($contact_id, $transfer_id, $amount = null, $title = null)
     {
@@ -673,7 +682,8 @@ class Mbank
 	 */
     protected function load($html)
     {
-        if (!@$this->document->loadHTML($html)) {
+	    /** @noinspection PhpUsageOfSilenceOperatorInspection */
+	    if (!@$this->document->loadHTML($html)) {
             throw new \Exception('loadHTML() failed');
         }
 
