@@ -6,15 +6,24 @@ class Mbank
 {
     protected $curl;
 
-    protected $tab, $token;
+    /** @var string */
+    protected $tab;
 
+    /** @var string */
+    protected $token;
+
+    /** @var \DOMDocument */
     protected $document;
 
+    /** @var \DOMXPath */
     protected $xpath;
 
+    /** @var array */
     protected $opts = array();
 
+    /** @var string string */
     public $url = 'https://online.mbank.pl';
+
 
     public function __construct()
     {
@@ -44,6 +53,14 @@ class Mbank
         curl_close($this->curl);
     }
 
+	/**
+	 * @param string $username
+	 * @param string $password
+	 *
+	 * @return bool
+	 *
+	 * @throws \Exception
+	 */
     public function login($username, $password)
     {
         $opts = array(
@@ -81,6 +98,11 @@ class Mbank
         return true;
     }
 
+	/**
+	 * @param string $profile
+	 *
+	 * @return mixed
+	 */
     public function profile($profile)
     {
         $profiles = array(
@@ -88,7 +110,7 @@ class Mbank
             'business' => 'F',
         );
 
-        if (!isset($profiles[$profile])) {
+        if (!array_key_exists($profile, $profiles)) {
             throw new \InvalidArgumentException('Invalid profile (individual|business)');
         }
 
@@ -103,6 +125,9 @@ class Mbank
         return $this->curl($opts);
     }
 
+	/**
+	 * @return array
+	 */
     public function accounts()
     {
         $opts = array(
@@ -134,6 +159,12 @@ class Mbank
         return $accounts;
     }
 
+	/**
+	 * @param string|null $iban
+	 * @param array       $criteria
+	 *
+	 * @return array
+	 */
     public function operations($iban = null, $criteria = array())
     {
         if ($iban) {
@@ -209,7 +240,15 @@ class Mbank
         return $operations;
     }
 
-    public function export($iban, $params = array())
+	/**
+	 * @param string $iban
+	 * @param array  $params
+	 *
+	 * @return array
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+    public function export($iban, array $params = array())
     {
         $opts = array(
             CURLOPT_URL => $this->url . '/csite/account_oper_list.aspx',
@@ -310,6 +349,11 @@ class Mbank
         return $this->curl($opts);
     }
 
+	/**
+	 * Returns your bank contact list
+	 *
+	 * @return array
+	 */
     public function contacts()
     {
         $opts = array(
@@ -324,13 +368,15 @@ class Mbank
 
         $response = $this->curl($opts);
         $response = isset($response['records']) ? $response['records'] : [];
-        //$response = array_filter($response, function($contact) {
-        //    return !empty($contact['transfers']);
-        //});
 
         return $response;
     }
 
+	/**
+	 * @param string $contact_id
+	 *
+	 * @return array
+	 */
     public function contact_details($contact_id)
     {
         $params = array(
@@ -353,6 +399,14 @@ class Mbank
         return $response;
     }
 
+	/**
+	 * @param string $contact_id
+	 * @param string $transfer_id
+	 * @param float|null $amount
+	 * @param string|null $title
+	 *
+	 * @return array
+	 */
     public function transfer_prepare($contact_id, $transfer_id, $amount = null, $title = null)
     {
         trigger_error('Experimental feature');
@@ -487,6 +541,13 @@ class Mbank
         return $formData;
     }
 
+	/**
+	 * @param $contact_id
+	 * @param $transfer_id
+	 * @param $transfer
+	 *
+	 * @return bool
+	 */
     public function transfer_submit($contact_id, $transfer_id, $transfer)
     {
         trigger_error('Experimental feature');
@@ -510,9 +571,17 @@ class Mbank
 
         $response = $this->curl($opts);
 
-        return (isset($response['summary']['fromAccount']) && (isset($response['summary']['toAccount'])));
+        return (isset($response['summary']['fromAccount']) && isset($response['summary']['toAccount']));
     }
 
+	/**
+	 * Money transfer
+	 * @param string $iban
+	 * @param  $amount
+	 * @param string $title
+	 *
+	 * @return bool
+	 */
     public function transfer($iban, $amount, $title = 'Przelew środków')
     {
         trigger_error('Experimental feature');
@@ -550,6 +619,9 @@ class Mbank
         return false;
     }
 
+	/**
+	 * @return array
+	 */
     public function logout()
     {
         $opts = array(
@@ -559,12 +631,22 @@ class Mbank
         return $this->curl($opts);
     }
 
-    public function setopt($opts)
+	/**
+	 * @param array $opts
+	 */
+    public function setopt(array $opts)
     {
         $this->opts = $opts + $this->opts;
     }
 
-    protected function curl($opts)
+	/**
+	 * @param array $opts
+	 *
+	 * @return array
+	 *
+	 * @throws \Exception
+	 */
+    protected function curl(array $opts)
     {
         $opts += $this->opts;
 
@@ -605,6 +687,13 @@ class Mbank
         return $response;
     }
 
+	/**
+	 * @param string $html
+	 *
+	 * @return void
+	 *
+	 * @throws \Exception
+	 */
     protected function load($html)
     {
         if (!@$this->document->loadHTML($html)) {
@@ -616,6 +705,13 @@ class Mbank
         //$this->xpath->registerPHPFunctions(array('preg_match'));
     }
 
+	/**
+	 * @param string $string
+	 *
+	 * @return void
+	 *
+	 * @return float
+	 */
     protected static function tofloat($string)
     {
         $pr = array(
