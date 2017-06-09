@@ -33,11 +33,13 @@ Install library from composer:
 // load the autoload.php from composer
 require 'vendor/autoload.php';
 
+use bgaluszka\Mbank\Mbank;
+
 const MBANK_LOGIN = 'YOUR-LOGIN';
 const MBANK_PASSWORD = 'YOUR-PASSWORD';
 
 try {
-    $mbank = new \bgaluszka\Mbank\Mbank();
+    $mbank = new Mbank();
     
     // Use const or config. Do not pass l/p directly in login() call or
     // it will be exposed when unhandled exception happen 
@@ -73,12 +75,14 @@ try {
 // load the autoload.php from composer
 require 'vendor/autoload.php';
 
+use bgaluszka\Mbank\Mbank;
+
 const MBANK_LOGIN = 'YOUR-LOGIN';
 const MBANK_PASSWORD = 'YOUR-PASSWORD';
 const MBANK_IBAN = 'ACCOUNT-IBAN';
 
 try {
-    $mbank = new \bgaluszka\Mbank\Mbank();
+    $mbank = new Mbank();
     
     // Use const or config. Do not pass l/p directly in login() call or
     // it will be exposed when unhandled exception happen 
@@ -118,7 +122,7 @@ const MBANK_PASSWORD = 'YOUR-PASSWORD';
 const MBANK_IBAN = 'ACCOUNT-IBAN';
 
 try {
-	$mbank = new \bgaluszka\Mbank\Mbank();
+	$mbank = new Mbank();
 	$mbank->login(MBANK_LOGIN, MBANK_PASSWORD);
 
 	// all transaction since beginning of given month
