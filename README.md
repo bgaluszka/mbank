@@ -38,7 +38,7 @@ try {
     $mbank->login('id', 'password');
     
     try {
-        foreach (array('individual', 'business') as $profile) {
+        foreach ($mbank->getAllAccountTypes() as $profile) {
             $mbank->profile($profile);
         
             foreach ($mbank->accounts() as $account) {

@@ -11,6 +11,32 @@ namespace bgaluszka\Mbank;
  */
 class Mbank
 {
+	/**
+	 * Corporate account type
+	 */
+	const ACCOUNT_TYPE_BUSINESS   = 'business';
+
+	/**
+	 * Individual's account type
+	 */
+	const ACCOUNT_TYPE_INDIVIDUAL = 'individual';
+
+
+
+	/**
+	 * Returns all known and supported account types. Note this does not mean
+	 * you own all these types of accounts!
+	 *
+	 * @return array
+	 */
+	public function getAllAccountTypes()
+	{
+		return array(
+			self::ACCOUNT_TYPE_INDIVIDUAL,
+			self::ACCOUNT_TYPE_BUSINESS,
+		);
+	}
+
 	/** @var resource */
     protected $curl;
 
@@ -117,23 +143,21 @@ class Mbank
     public function profile($profile)
     {
         $profiles = array(
-            'individual' => 'I',
-            'business' => 'F',
+	        self::ACCOUNT_TYPE_INDIVIDUAL => 'I',
+	        self::ACCOUNT_TYPE_BUSINESS   => 'F',
         );
 
         if (!array_key_exists($profile, $profiles)) {
-            throw new \InvalidArgumentException('Invalid profile (individual|business)');
+            throw new \InvalidArgumentException('Invalid profile');
         }
 
-	    $x= $this->curl(array(
+	    return $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
 		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => array(
 			    'profileCode' => $profiles[ $profile ],
 		    ),
 	    ));
-
-	    return $x;
     }
 
 	/**
@@ -308,6 +332,20 @@ class Mbank
             'export_oper_history_check' => 'on',
             'export_oper_history_format' => 'CSV',
         );
+
+	    const TRANS_ALL   = 'ALL000000'; // Wszystkie
+	    const TRANS_ARRIVED   = 'ABO000000';  // Uznania rachunku
+	    const TRANS_SENT   = 'CAR000000';  // Obciążenia rachunku
+	    const TRANS_OUTGOING   = 'TRI111000';  // Przelewy przychodzące
+	    const TRANS_INCOMING   = 'TRO111000';  // Przelewy wychodzące
+	    const TRANS_OWN   = 'TIH111000';  // Przelewy własne
+	    const TRANS_IRS   = 'TUS111000';  // Przelewy podatkowe
+	    const TRANS_ZUS   = 'TRZ101000';  // Przelewy do ZUS
+	    const TRANS_CARDS   = 'LDS100000';  // Operacje kartowe
+	    const TRANS_CASH_DEPOSIT   = 'CAI100000';  // Wpłaty gotówkowe
+	    const TRANS_CASH_WITHDRAW   = 'CAO100000';  // Wypłaty gotówkowe
+	    const TRANS_INTEREST   = 'INT000000';  // Kapitalizacja odsetek
+	    const TRANS_FEES   = 'COM100000';  // Prowizje i opłaty
 
         $accoperlist_typefilter_group = array(
             'ALL000000' => 'Wszystkie',
