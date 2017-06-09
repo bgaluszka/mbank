@@ -70,7 +70,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/Account/JsonLogin',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
                 'UserName' => $username,
                 'Password' => $password,
@@ -116,7 +115,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(
                 'profileCode' => $profiles[$profile],
             ),
@@ -132,7 +130,6 @@ class Mbank
     {
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(),
             CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
         );
@@ -160,17 +157,18 @@ class Mbank
     }
 
 	/**
-	 * @param string|null $iban
+	 * Lists account operations
+	 *
+	 * @param string|null $iban optional IBAN of account to get operations for
 	 * @param array       $criteria
 	 *
 	 * @return array
 	 */
-    public function operations($iban = null, $criteria = array())
+    public function operations($iban = null, array $criteria = array())
     {
         if ($iban) {
             $opts = array(
                 CURLOPT_URL => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
-                CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => array(
                     'accountNumber' => $iban,
                 ),
@@ -207,7 +205,6 @@ class Mbank
 
                 $opts = array(
                     CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
-                    CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $criteria,
                     CURLOPT_HTTPHEADER => array(
                         'Content-Type: application/json',
@@ -342,7 +339,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/csite/printout_oper_list.aspx',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => http_build_query($params),
         );
 
@@ -358,7 +354,6 @@ class Mbank
     {
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactListForAddressBook',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => '',
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -386,7 +381,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/AddressBook/Data/GetContactDetails',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $params,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -420,7 +414,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $params,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -520,7 +513,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $params,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -561,7 +553,6 @@ class Mbank
 
         $opts = array(
             CURLOPT_URL => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
-            CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $params,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
@@ -640,14 +631,18 @@ class Mbank
     }
 
 	/**
-	 * @param array $opts
+	 * @param array $opts optional array of cURL extension options to pass to its curl_exec()
 	 *
 	 * @return array
 	 *
 	 * @throws \Exception
 	 */
-    protected function curl(array $opts)
+    protected function curl(array $opts = array())
     {
+    	// If CURLOPT_POSTFIELDS we enforce CURLOPT_POST
+	    if (array_key_exists(CURLOPT_POSTFIELDS, $opts)) {
+		    $opts[CURLOPT_POST] = true;
+	    }
         $opts += $this->opts;
 
         if (isset($this->token)) {
