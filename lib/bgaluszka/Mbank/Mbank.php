@@ -4,6 +4,7 @@ namespace bgaluszka\Mbank;
 
 class Mbank
 {
+	/** @var resource */
     protected $curl;
 
     /** @var string */
@@ -405,11 +406,9 @@ class Mbank
             'recipientId' => $contact_id,
             'templateId' => $transfer_id,
         );
-        $params = json_encode($params);
-
 	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
-		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_POSTFIELDS => json_encode($params),
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
 			    'X-Requested-With: XMLHttpRequest',
@@ -502,11 +501,10 @@ class Mbank
             'recipientId' => $contact_id,
             'templateId' => $transfer_id,
         );
-        $params = json_encode($params);
 
 	    $response = $this->curl($opts = array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
-		    CURLOPT_POSTFIELDS => $params,
+		    CURLOPT_POSTFIELDS => json_encode($params),
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
 			    'X-Requested-With: XMLHttpRequest',
