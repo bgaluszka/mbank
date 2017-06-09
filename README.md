@@ -24,7 +24,7 @@ Install library from composer:
 }
 ```
 
-## Example usage
+## Usage examples
 
 ### Recent operations for all accounts
 
@@ -55,7 +55,7 @@ try {
     
     $mbank->logout();
     
-} catch (Exception $e) {
+} catch (\Exception $e) {
 	echo $e->getMessage();
 }
 ```
@@ -87,7 +87,38 @@ try {
     
     $mbank->logout();
 
-} catch (Exception $e) {
+} catch (\Exception $e) {
 	echo $e->getMessage();
 }
+```
+
+### Export transactions as CSV
+
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+try {
+    $mbank = new \bgaluszka\Mbank\Mbank();
+    $mbank->login('id', 'password');
+    
+    // all transaction from begining of given month
+    $csv = $mbank->export('iban', array(
+        'daterange_from_day' => '1',
+        'daterange_from_month' => date('m'),
+        'daterange_from_year' => date('Y'),
+        'daterange_to_day' => date('d'),
+        'daterange_to_month' => date('m'),
+        'daterange_to_year' => date('Y'),
+    ));
+    // you probably want to convert that to UTF-8
+    $csv = iconv('WINDOWS-1250', 'UTF-8', $csv);
+    
+    file_put_contents('mbank.csv', $csv);
+    
+    $mbank->logout();
+} catch (\Exception $e) {
+	echo $e->getMessage();
+}
+
 ```
