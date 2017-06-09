@@ -2,13 +2,20 @@
 
 namespace bgaluszka\Mbank;
 
+/**
+ * Library for accessing mBank (mbank.pl) transaction service
+ *
+ * Class Mbank
+ *
+ * @package bgaluszka\Mbank
+ */
 class Mbank
 {
 	/** @var resource */
     protected $curl;
 
     /** @var string */
-    protected $tab;
+    protected $tab = null;
 
     /** @var string|null */
     protected $token = null;
@@ -55,6 +62,8 @@ class Mbank
     }
 
 	/**
+	 * Starts mBank session
+	 *
 	 * @param string $username
 	 * @param string $password
 	 *
@@ -114,28 +123,26 @@ class Mbank
             throw new \InvalidArgumentException('Invalid profile (individual|business)');
         }
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
-            CURLOPT_POSTFIELDS => array(
-                'profileCode' => $profiles[$profile],
-            ),
-        );
-
-        return $this->curl($opts);
+	    return $this->curl(array(
+		    CURLOPT_URL        => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
+		    CURLOPT_POSTFIELDS => array(
+			    'profileCode' => $profiles[ $profile ],
+		    ),
+	    ));
     }
 
 	/**
+	 * Lists your accounts
+	 *
 	 * @return array
 	 */
     public function accounts()
     {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
-            CURLOPT_POSTFIELDS => array(),
-            CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
-        );
-
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
+	        CURLOPT_POSTFIELDS => array(),
+	        CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
+        ));
 
         $accounts = array();
 
@@ -168,22 +175,18 @@ class Mbank
     public function operations($iban = null, array $criteria = array())
     {
         if ($iban) {
-            $opts = array(
-                CURLOPT_URL => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
-                CURLOPT_POSTFIELDS => array(
-                    'accountNumber' => $iban,
-                ),
-                CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
-            );
-
-            $this->curl($opts);
+            $this->curl(array(
+	            CURLOPT_URL => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
+	            CURLOPT_POSTFIELDS => array(
+		            'accountNumber' => $iban,
+	            ),
+	            CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
+            ));
         }
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory',
-        );
-
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory',
+        ));
 
         // http://php.net/manual/en/domdocument.loadhtml.php#95251
         $this->load('<?xml encoding="UTF-8">' . $response);
@@ -192,28 +195,23 @@ class Mbank
             $nodes = $this->xpath->query('//input[@name="ProductIds[]"][@checked]');
 
             $products = array();
-
             foreach ($nodes as $node) {
                 $products[] = $this->xpath->evaluate('string(@value)', $node);
             }
 
-            if ($products) {
-                $criteria = array_merge(array(
-                    'ProductIds' => $products,
-                ), $criteria);
+            if (count($products) > 0) {
+	            $criteria = json_encode(array_merge(array(
+		            'ProductIds' => $products,
+	            ), $criteria));
 
-                $criteria = json_encode($criteria);
-
-                $opts = array(
-                    CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
-                    CURLOPT_POSTFIELDS => $criteria,
-                    CURLOPT_HTTPHEADER => array(
-                        'Content-Type: application/json',
-                        'X-Requested-With: XMLHttpRequest',
-                    ),
-                );
-
-                $response = $this->curl($opts);
+                $response = $this->curl(array(
+	                CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
+	                CURLOPT_POSTFIELDS => $criteria,
+	                CURLOPT_HTTPHEADER => array(
+		                'Content-Type: application/json',
+		                'X-Requested-With: XMLHttpRequest',
+	                ),
+                ));
 
                 $this->load('<?xml encoding="UTF-8">' . $response);
             }
@@ -222,7 +220,6 @@ class Mbank
         $nodes = $this->xpath->query('//ul[@class="content-list-body"]/li');
 
         $operations = array();
-
         foreach ($nodes as $node) {
             $operations[] = array(
                 'id' => $this->xpath->evaluate('string(@data-id)', $node),
@@ -248,11 +245,9 @@ class Mbank
 	 */
     public function export($iban, array $params = array())
     {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/csite/account_oper_list.aspx',
-        );
-
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/csite/account_oper_list.aspx',
+        ));
 
         $this->load($response);
 
@@ -338,12 +333,10 @@ class Mbank
             throw new \InvalidArgumentException('Invalid export_oper_history_format parameter');
         }
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/csite/printout_oper_list.aspx',
-            CURLOPT_POSTFIELDS => http_build_query($params),
-        );
-
-        return $this->curl($opts);
+        return $this->curl(array(
+	        CURLOPT_URL => $this->url . '/csite/printout_oper_list.aspx',
+	        CURLOPT_POSTFIELDS => http_build_query($params),
+        ));
     }
 
 	/**
@@ -502,7 +495,7 @@ class Mbank
             'templateId' => $transfer_id,
         );
 
-	    $response = $this->curl($opts = array(
+	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
 		    CURLOPT_POSTFIELDS => json_encode($params),
 		    CURLOPT_HTTPHEADER => array(
@@ -603,6 +596,7 @@ class Mbank
 	public function logout()
 	{
 		$this->token = null;
+		$this->tab = null;
 
 		return $this->curl(array(
 				CURLOPT_URL => $this->url . '/pl/Account/Logout',
@@ -638,7 +632,7 @@ class Mbank
             $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
         }
 
-        if (isset($this->tab)) {
+        if ($this->tab !== null) {
             // seems like it has to be the same as the one in cookie but value doesn't matter
             $opts[CURLOPT_HTTPHEADER][] = "X-Tab-Id: {$this->tab}";
         }
