@@ -49,14 +49,14 @@ try {
                 }
             }
         }
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         echo "Failed accessing profile: {$e->getMessage()}\n";
     }
     
     $mbank->logout();
     
 } catch (\Exception $e) {
-	echo $e->getMessage();
+	echo "{$e->getMessage()}\n";
 }
 ```
 
@@ -88,6 +88,6 @@ try {
     $mbank->logout();
 
 } catch (\Exception $e) {
-	echo $e->getMessage();
+	echo "{$e->getMessage()}\n";
 }
 ```
