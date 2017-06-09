@@ -76,32 +76,29 @@ class Mbank
 	 */
     public function login($username, $password)
     {
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/Login',
-        );
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/pl/Login',
+        ));
 
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl/Account/JsonLogin',
-            CURLOPT_POSTFIELDS => array(
-                'UserName' => $username,
-                'Password' => $password,
-                'Seed' => '',
-                'Lang' => '',
-            ),
-        );
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/pl/Account/JsonLogin',
+	        CURLOPT_POST => true,
+	        CURLOPT_POSTFIELDS => array(
+		        'UserName' => $username,
+		        'Password' => $password,
+		        'Seed' => '',
+		        'Lang' => '',
+	        ),
+        ));
 
         if (empty($response['successful'])) {
             throw new \Exception('login() failed');
         }
 
         $this->tab = $response['tabId'];
-
-        $opts = array(
-            CURLOPT_URL => $this->url . '/pl',
-        );
-        $response = $this->curl($opts);
+        $response = $this->curl(array(
+	        CURLOPT_URL => $this->url . '/pl',
+        ));
 
         $this->load($response);
 
@@ -128,12 +125,15 @@ class Mbank
             throw new \InvalidArgumentException('Invalid profile (individual|business)');
         }
 
-	    return $this->curl(array(
+	    $x= $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
+		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => array(
 			    'profileCode' => $profiles[ $profile ],
 		    ),
 	    ));
+
+	    return $x;
     }
 
 	/**
@@ -146,6 +146,7 @@ class Mbank
 	    /** @var array $response */
         $response = $this->curl(array(
 	        CURLOPT_URL => $this->url . '/pl/Accounts/Accounts/List',
+	        CURLOPT_POST => true,
 	        CURLOPT_POSTFIELDS => array(),
 	        CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
         ));
@@ -184,6 +185,7 @@ class Mbank
         if ($iban) {
             $this->curl(array(
 	            CURLOPT_URL => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
+	            CURLOPT_POST => true,
 	            CURLOPT_POSTFIELDS => array(
 		            'accountNumber' => $iban,
 	            ),
@@ -213,6 +215,7 @@ class Mbank
 
                 $response = $this->curl(array(
 	                CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
+	                CURLOPT_POST => true,
 	                CURLOPT_POSTFIELDS => $criteria,
 	                CURLOPT_HTTPHEADER => array(
 		                'Content-Type: application/json',
@@ -342,6 +345,7 @@ class Mbank
 
         return $this->curl(array(
 	        CURLOPT_URL => $this->url . '/csite/printout_oper_list.aspx',
+	        CURLOPT_POST => true,
 	        CURLOPT_POSTFIELDS => http_build_query($params),
         ));
     }
@@ -379,6 +383,7 @@ class Mbank
 
 	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/AddressBook/Data/GetContactDetails',
+		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => $params,
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
@@ -410,6 +415,7 @@ class Mbank
         );
 	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
+		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => json_encode($params),
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
@@ -506,6 +512,7 @@ class Mbank
 
 	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
+		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => json_encode($params),
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
@@ -544,6 +551,7 @@ class Mbank
 
 	    $response = $this->curl(array(
 		    CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
+		    CURLOPT_POST => true,
 		    CURLOPT_POSTFIELDS => $params,
 		    CURLOPT_HTTPHEADER => array(
 			    'Content-Type: application/json',
@@ -630,13 +638,10 @@ class Mbank
 	 */
     protected function curl(array $opts = array())
     {
-    	// If CURLOPT_POSTFIELDS we enforce CURLOPT_POST
-	    if (array_key_exists(CURLOPT_POSTFIELDS, $opts)) {
-		    $opts[CURLOPT_POST] = true;
-	    }
         $opts += $this->opts;
 
-        if ($this->token !== null) {
+	    if (isset($this->token)) {
+//        if ($this->token !== null) {
             // seems like value of this doesn't matter
             $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
         }
@@ -646,7 +651,7 @@ class Mbank
             $opts[CURLOPT_HTTPHEADER][] = "X-Tab-Id: {$this->tab}";
         }
 
-        curl_setopt_array($this->curl, $opts);
+	    curl_setopt_array($this->curl, $opts);
 
         $response = curl_exec($this->curl);
 
