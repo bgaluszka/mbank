@@ -383,9 +383,9 @@ class Mbank
     }
 
 	/**
-	 * @param string $contact_id
-	 * @param string $transfer_id
-	 * @param float|null $amount
+	 * @param string      $contact_id
+	 * @param string      $transfer_id
+	 * @param float|null  $amount
 	 * @param string|null $title
 	 *
 	 * @return array
@@ -655,7 +655,7 @@ class Mbank
             $exception = "curl() failed - HTTP Status Code {$code}";
 
             if (isset($response['message'])) {
-                $exception = "{$exception} ({$message})";
+                $exception = "{$exception} ({$response['message']})";
             }
 
             throw new \Exception($exception);
@@ -684,8 +684,6 @@ class Mbank
 
 	/**
 	 * @param string $string
-	 *
-	 * @return void
 	 *
 	 * @return float
 	 */
