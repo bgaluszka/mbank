@@ -404,7 +404,7 @@ class Mbank
 			    'X-Requested-With: XMLHttpRequest',
 		    ),
 	    ));
-        $response = isset($response['records']) ? $response['records'] : [];
+        $response = isset($response['records']) ? $response['records'] : array();
 
         return $response;
     }
@@ -477,11 +477,11 @@ class Mbank
         $formData = array(
             //'accountParams' => $fromAccount['accountParams'],
             //'additionalOptions' => $response['formData']['additionalOptions'],
-            'additionalOptions' => [
+            'additionalOptions' => array(
                 'sendConfirmation' => false,
                 //'sendConfirmationOptions' => ['example@example.com'],
                 'sendSmsOnFail' => false,
-            ],
+            ),
             //'address' => $response['formData']['address'],
             //'addToBasket' => $response['formData']['addToBasket'],
             'amount' => $amount,
