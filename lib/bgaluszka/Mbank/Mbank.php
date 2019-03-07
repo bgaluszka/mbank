@@ -113,7 +113,7 @@ class Mbank
 	 *
 	 * @return bool
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     public function login($username, $password)
     {
@@ -133,7 +133,7 @@ class Mbank
         ));
 
         if (empty($response['successful'])) {
-            throw new \Exception('login() failed');
+            throw new \RuntimeException('login() failed');
         }
 
         $this->tab = $response['tabId'];
@@ -731,7 +731,7 @@ class Mbank
         }
 
         if ($error = curl_error($this->curl)) {
-            throw new \Exception("curl() failed - {$error}");
+            throw new \RuntimeException("curl() failed - {$error}");
         }
 
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
