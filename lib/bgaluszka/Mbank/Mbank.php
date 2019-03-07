@@ -599,7 +599,7 @@ class Mbank
 		    ),
 	    ));
 
-        return (isset($response['summary']['fromAccount']) && isset($response['summary']['toAccount']));
+        return isset($response['summary']['fromAccount'], $response['summary']['toAccount']);
     }
 
 	/**
