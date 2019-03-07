@@ -56,10 +56,10 @@ class Mbank
     protected $curl;
 
     /** @var string */
-    protected $tab = null;
+    protected $tab;
 
     /** @var string|null */
-    protected $token = null;
+    protected $token;
 
     /** @var \DOMDocument */
     protected $document;
@@ -604,13 +604,14 @@ class Mbank
 
 	/**
 	 * Money transfer
-	 * @param string $iban
-	 * @param  $amount
-	 * @param string $title
+	 *
+	 * @param string $receipient_iban IBAN number of the account to send the funds to.
+	 * @param float  $amount          Amount of money to be send.
+	 * @param string $title           Transfer description.
 	 *
 	 * @return bool
 	 */
-    public function transfer($iban, $amount, $title = 'Przelew środków')
+	public function transfer($receipient_iban, $amount, $title = 'Przelew środków')
     {
         trigger_error('Experimental feature');
 
@@ -628,9 +629,9 @@ class Mbank
 
                         if ($receiver) {
                             $receiver = preg_replace('/[^\d]/', '', $receiver);
-                            $iban = preg_replace('/[^\d]/', '', $iban);
+                            $receipient_iban = preg_replace('/[^\d]/', '', $receipient_iban);
 
-                            if ($receiver === $iban) {
+                            if ($receiver === $receipient_iban) {
                                 $data = $this->transfer_prepare($contact['contactId'], $transfer['id'], $amount, $title);
 
                                 //$data['additionalOptions']['sendConfirmation'] = true;
@@ -656,7 +657,7 @@ class Mbank
 	 * @param string $startDate Report start date (in 'DD.MM.YYYY' format).
 	 * @param string $endDate   Optional report end date (in 'DD.MM.YYYY' format). If not specified, Report for startDate only is returned.
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function mt940_get($iban, $startDate, $endDate = null)
 	{
@@ -712,8 +713,7 @@ class Mbank
         $opts += $this->opts;
 
 	    if (isset($this->token)) {
-//        if ($this->token !== null) {
-            // seems like value of this doesn't matter
+            // seems like value of this doesn't matter so no futher validation needed
             $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
         }
 
@@ -737,13 +737,13 @@ class Mbank
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
         if ($code >= 400) {
-            $exception = "curl() failed - HTTP Status Code {$code}";
+            $msg = "curl() failed - HTTP Status Code {$code}";
 
             if (isset($response['message'])) {
-                $exception = "{$exception} ({$response['message']})";
+                $msg = "{$msg} ({$response['message']})";
             }
 
-            throw new \RuntimeException($exception);
+            throw new \RuntimeException($msg);
         }
 
         return $response;
