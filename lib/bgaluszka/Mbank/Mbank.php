@@ -271,13 +271,13 @@ class Mbank
         $operations = array();
         foreach ($nodes as $node) {
             $operations[] = array(
-                'id' => $this->xpath->evaluate('string(@data-id)', $node),
-                'type' => trim($this->xpath->evaluate('string(header/div[@class="column type"])', $node)),
-                'released' => date('Y-m-d', strtotime($this->xpath->evaluate('string(header/div[@class="column date"])', $node))),
-                'title' => trim($this->xpath->evaluate('string(header/div[@class="column description"]/span/span/@data-original-title)', $node)),
-                'category' => trim($this->xpath->evaluate('string(header/div[@class="column category"]/div[1]/span)', $node)),
-                'value' => self::tofloat($this->xpath->evaluate('string(header/div[@class="column amount"]/strong)', $node)),
-                'currency' => $this->xpath->evaluate('string(@data-currency)', $node),
+	            'id' => $this->xpath->evaluate('string(@data-id)', $node),
+	            'type' => trim($this->xpath->evaluate('string(header/div[@class="column type"])', $node)),
+	            'released' => date('Y-m-d', strtotime($this->xpath->evaluate('string(header/div[@class="column date"])', $node))),
+	            'title' => trim($this->xpath->evaluate('string(header/div[@class="column description"]/span/span/@data-original-title)', $node)),
+	            'category' => trim($this->xpath->evaluate('string(header/div[@class="column category"]/div[1]/span)', $node)),
+	            'value' => self::toFloat($this->xpath->evaluate('string(header/div[@class="column amount"]/strong)', $node)),
+	            'currency' => $this->xpath->evaluate('string(@data-currency)', $node),
             );
         }
 
@@ -648,6 +648,37 @@ class Mbank
     }
 
 	/**
+	 * Downloads MT940 report for given period.
+	 *
+	 * NOTE: you MUST have MT940 reporting active for that account.
+	 *
+	 * @param string $iban      Account IBAN number.
+	 * @param string $startDate Report start date (in 'DD.MM.YYYY' format).
+	 * @param string $endDate   Optional report end date (in 'DD.MM.YYYY' format). If not specified, Report for startDate only is returned.
+	 *
+	 * @return string
+	 */
+	public function mt940_get($iban, $startDate, $endDate = null)
+	{
+		if ($endDate === null) {
+			$endDate = $startDate;
+		}
+
+		$query_params = array(
+			'AccountNumber'    => $iban,
+			'Period'           => 'Nonstandard',
+			'ReportPeriodFrom' => $startDate,
+			'ReportPeriodTo'   => $endDate,
+		);
+
+		$response = $this->curl(array(
+			CURLOPT_URL => $this->url . '/pl/Pfm/Reports/DownloadMT940Report?' . http_build_query($query_params),
+		));
+
+		return $response;
+	}
+
+	/**
 	 * @return array
 	 */
 	public function logout()
@@ -674,7 +705,7 @@ class Mbank
 	 *
 	 * @return array
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     protected function curl(array $opts = array())
     {
@@ -712,7 +743,7 @@ class Mbank
                 $exception = "{$exception} ({$response['message']})";
             }
 
-            throw new \Exception($exception);
+            throw new \RuntimeException($exception);
         }
 
         return $response;
@@ -723,13 +754,13 @@ class Mbank
 	 *
 	 * @return void
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     protected function load($html)
     {
 	    /** @noinspection PhpUsageOfSilenceOperatorInspection */
 	    if (!@$this->document->loadHTML($html)) {
-            throw new \Exception('loadHTML() failed');
+            throw new \RuntimeException('loadHTML() failed');
         }
 
         $this->xpath = new \DOMXPath($this->document);
@@ -742,13 +773,13 @@ class Mbank
 	 *
 	 * @return float
 	 */
-    protected static function tofloat($string)
+    protected static function toFloat($string)
     {
         $pr = array(
             '/[^\-\d,]/' => '',
             '/,/' => '.',
         );
 
-        return (float) preg_replace(array_keys($pr), $pr, $string);
+        return (float)preg_replace(array_keys($pr), $pr, $string);
     }
 }
