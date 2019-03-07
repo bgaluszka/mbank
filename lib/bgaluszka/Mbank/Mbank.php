@@ -237,7 +237,7 @@ class Mbank
         ));
 
         // http://php.net/manual/en/domdocument.loadhtml.php#95251
-        $this->load('<?xml encoding="UTF-8">' . $response);
+        $this->load('<?xml encoding="UTF-8">' . implode('', $response));
 
         if ($criteria) {
             $nodes = $this->xpath->query('//input[@name="ProductIds[]"][@checked]');
@@ -262,7 +262,7 @@ class Mbank
 	                ),
                 ));
 
-                $this->load('<?xml encoding="UTF-8">' . $response);
+                $this->load('<?xml encoding="UTF-8">' . implode('', $response));
             }
         }
 
@@ -728,6 +728,8 @@ class Mbank
 
         if ($json = json_decode($response, true)) {
             $response = $json;
+        } else {
+        	$response = array($response);
         }
 
         if ($error = curl_error($this->curl)) {
@@ -750,7 +752,7 @@ class Mbank
     }
 
 	/**
-	 * @param string $html
+	 * @param string|array $html
 	 *
 	 * @return void
 	 *
@@ -758,6 +760,10 @@ class Mbank
 	 */
     protected function load($html)
     {
+    	if (is_array($html)) {
+    		$html = implode('', $html);
+	    }
+
 	    /** @noinspection PhpUsageOfSilenceOperatorInspection */
 	    if (!@$this->document->loadHTML($html)) {
             throw new \RuntimeException('loadHTML() failed');
