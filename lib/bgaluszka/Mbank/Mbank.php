@@ -248,14 +248,14 @@ class Mbank
             }
 
             if (count($products) > 0) {
-	            $criteria = json_encode(array_merge(array(
+	            $criteria_json = json_encode(array_merge(array(
 		            'ProductIds' => $products,
 	            ), $criteria));
 
                 $response = $this->curl(array(
 	                CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
 	                CURLOPT_POST => true,
-	                CURLOPT_POSTFIELDS => $criteria,
+	                CURLOPT_POSTFIELDS => $criteria_json,
 	                CURLOPT_HTTPHEADER => array(
 		                'Content-Type: application/json',
 		                'X-Requested-With: XMLHttpRequest',
