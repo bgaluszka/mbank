@@ -9,7 +9,9 @@
 ## Requirements
 
  * PHP 5.3 or higher
- * [cURL](http://www.php.net/manual/book.curl.php) extension
+ * Extensions:
+   * [cURL](http://www.php.net/manual/book.curl.php) 
+   * [DOM](http://php.net/manual/en/book.dom.php) 
 
 ## Installation
 
