@@ -56,10 +56,10 @@ class Mbank
     protected $curl;
 
     /** @var string */
-    protected $tab = null;
+    protected $tab;
 
     /** @var string|null */
-    protected $token = null;
+    protected $token;
 
     /** @var \DOMDocument */
     protected $document;
@@ -113,7 +113,7 @@ class Mbank
 	 *
 	 * @return bool
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     public function login($username, $password)
     {
@@ -133,7 +133,7 @@ class Mbank
         ));
 
         if (empty($response['successful'])) {
-            throw new \Exception('login() failed');
+            throw new \RuntimeException('login() failed');
         }
 
         $this->tab = $response['tabId'];
@@ -237,7 +237,7 @@ class Mbank
         ));
 
         // http://php.net/manual/en/domdocument.loadhtml.php#95251
-        $this->load('<?xml encoding="UTF-8">' . $response);
+        $this->load('<?xml encoding="UTF-8">' . implode('', $response));
 
         if ($criteria) {
             $nodes = $this->xpath->query('//input[@name="ProductIds[]"][@checked]');
@@ -262,7 +262,7 @@ class Mbank
 	                ),
                 ));
 
-                $this->load('<?xml encoding="UTF-8">' . $response);
+                $this->load('<?xml encoding="UTF-8">' . implode('', $response));
             }
         }
 
@@ -271,13 +271,13 @@ class Mbank
         $operations = array();
         foreach ($nodes as $node) {
             $operations[] = array(
-                'id' => $this->xpath->evaluate('string(@data-id)', $node),
-                'type' => trim($this->xpath->evaluate('string(header/div[@class="column type"])', $node)),
-                'released' => date('Y-m-d', strtotime($this->xpath->evaluate('string(header/div[@class="column date"])', $node))),
-                'title' => trim($this->xpath->evaluate('string(header/div[@class="column description"]/span/span/@data-original-title)', $node)),
-                'category' => trim($this->xpath->evaluate('string(header/div[@class="column category"]/div[1]/span)', $node)),
-                'value' => self::tofloat($this->xpath->evaluate('string(header/div[@class="column amount"]/strong)', $node)),
-                'currency' => $this->xpath->evaluate('string(@data-currency)', $node),
+	            'id' => $this->xpath->evaluate('string(@data-id)', $node),
+	            'type' => trim($this->xpath->evaluate('string(header/div[@class="column type"])', $node)),
+	            'released' => date('Y-m-d', strtotime($this->xpath->evaluate('string(header/div[@class="column date"])', $node))),
+	            'title' => trim($this->xpath->evaluate('string(header/div[@class="column description"]/span/span/@data-original-title)', $node)),
+	            'category' => trim($this->xpath->evaluate('string(header/div[@class="column category"]/div[1]/span)', $node)),
+	            'value' => self::toFloat($this->xpath->evaluate('string(header/div[@class="column amount"]/strong)', $node)),
+	            'currency' => $this->xpath->evaluate('string(@data-currency)', $node),
             );
         }
 
@@ -404,7 +404,7 @@ class Mbank
 			    'X-Requested-With: XMLHttpRequest',
 		    ),
 	    ));
-        $response = isset($response['records']) ? $response['records'] : [];
+        $response = isset($response['records']) ? $response['records'] : array();
 
         return $response;
     }
@@ -477,11 +477,11 @@ class Mbank
         $formData = array(
             //'accountParams' => $fromAccount['accountParams'],
             //'additionalOptions' => $response['formData']['additionalOptions'],
-            'additionalOptions' => [
+            'additionalOptions' => array(
                 'sendConfirmation' => false,
                 //'sendConfirmationOptions' => ['example@example.com'],
                 'sendSmsOnFail' => false,
-            ],
+            ),
             //'address' => $response['formData']['address'],
             //'addToBasket' => $response['formData']['addToBasket'],
             'amount' => $amount,
@@ -599,18 +599,19 @@ class Mbank
 		    ),
 	    ));
 
-        return (isset($response['summary']['fromAccount']) && isset($response['summary']['toAccount']));
+        return isset($response['summary']['fromAccount'], $response['summary']['toAccount']);
     }
 
 	/**
 	 * Money transfer
-	 * @param string $iban
-	 * @param  $amount
-	 * @param string $title
+	 *
+	 * @param string $receipient_iban IBAN number of the account to send the funds to.
+	 * @param float  $amount          Amount of money to be send.
+	 * @param string $title           Transfer description.
 	 *
 	 * @return bool
 	 */
-    public function transfer($iban, $amount, $title = 'Przelew środków')
+	public function transfer($receipient_iban, $amount, $title = 'Przelew środków')
     {
         trigger_error('Experimental feature');
 
@@ -628,9 +629,9 @@ class Mbank
 
                         if ($receiver) {
                             $receiver = preg_replace('/[^\d]/', '', $receiver);
-                            $iban = preg_replace('/[^\d]/', '', $iban);
+                            $receipient_iban = preg_replace('/[^\d]/', '', $receipient_iban);
 
-                            if ($receiver === $iban) {
+                            if ($receiver === $receipient_iban) {
                                 $data = $this->transfer_prepare($contact['contactId'], $transfer['id'], $amount, $title);
 
                                 //$data['additionalOptions']['sendConfirmation'] = true;
@@ -646,6 +647,37 @@ class Mbank
 
         return false;
     }
+
+	/**
+	 * Downloads MT940 report for given period.
+	 *
+	 * NOTE: you MUST have MT940 reporting active for that account.
+	 *
+	 * @param string $iban      Account IBAN number.
+	 * @param string $startDate Report start date (in 'DD.MM.YYYY' format).
+	 * @param string $endDate   Optional report end date (in 'DD.MM.YYYY' format). If not specified, Report for startDate only is returned.
+	 *
+	 * @return array
+	 */
+	public function mt940_get($iban, $startDate, $endDate = null)
+	{
+		if ($endDate === null) {
+			$endDate = $startDate;
+		}
+
+		$query_params = array(
+			'AccountNumber'    => $iban,
+			'Period'           => 'Nonstandard',
+			'ReportPeriodFrom' => $startDate,
+			'ReportPeriodTo'   => $endDate,
+		);
+
+		$response = $this->curl(array(
+			CURLOPT_URL => $this->url . '/pl/Pfm/Reports/DownloadMT940Report?' . http_build_query($query_params),
+		));
+
+		return $response;
+	}
 
 	/**
 	 * @return array
@@ -674,15 +706,14 @@ class Mbank
 	 *
 	 * @return array
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     protected function curl(array $opts = array())
     {
         $opts += $this->opts;
 
 	    if (isset($this->token)) {
-//        if ($this->token !== null) {
-            // seems like value of this doesn't matter
+            // seems like value of this doesn't matter so no futher validation needed
             $opts[CURLOPT_HTTPHEADER][] = "X-Request-Verification-Token: {$this->token}";
         }
 
@@ -697,39 +728,45 @@ class Mbank
 
         if ($json = json_decode($response, true)) {
             $response = $json;
+        } else {
+        	$response = array($response);
         }
 
         if ($error = curl_error($this->curl)) {
-            throw new \Exception("curl() failed - {$error}");
+            throw new \RuntimeException("curl() failed - {$error}");
         }
 
         $code = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
         if ($code >= 400) {
-            $exception = "curl() failed - HTTP Status Code {$code}";
+            $msg = "curl() failed - HTTP Status Code {$code}";
 
             if (isset($response['message'])) {
-                $exception = "{$exception} ({$response['message']})";
+                $msg = "{$msg} ({$response['message']})";
             }
 
-            throw new \Exception($exception);
+            throw new \RuntimeException($msg);
         }
 
         return $response;
     }
 
 	/**
-	 * @param string $html
+	 * @param string|array $html
 	 *
 	 * @return void
 	 *
-	 * @throws \Exception
+	 * @throws \RuntimeException
 	 */
     protected function load($html)
     {
+    	if (is_array($html)) {
+    		$html = implode('', $html);
+	    }
+
 	    /** @noinspection PhpUsageOfSilenceOperatorInspection */
 	    if (!@$this->document->loadHTML($html)) {
-            throw new \Exception('loadHTML() failed');
+            throw new \RuntimeException('loadHTML() failed');
         }
 
         $this->xpath = new \DOMXPath($this->document);
@@ -742,13 +779,13 @@ class Mbank
 	 *
 	 * @return float
 	 */
-    protected static function tofloat($string)
+    protected static function toFloat($string)
     {
         $pr = array(
             '/[^\-\d,]/' => '',
             '/,/' => '.',
         );
 
-        return (float) preg_replace(array_keys($pr), $pr, $string);
+        return (float)preg_replace(array_keys($pr), $pr, $string);
     }
 }
