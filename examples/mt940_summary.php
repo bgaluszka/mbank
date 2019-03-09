@@ -19,7 +19,7 @@ try {
 	$mbank->login(MBANK_LOGIN, MBANK_PASSWORD);
 
 	// Returns summary of operations between start and end date. To get summary
-	// for just a single day, ommit $endDate (or pass null)
+	// for just a single day, omit $endDate (or pass null)
 	$startDate = '12.01.2019';
 	$endDate = '21.01.2019';
 	$summary = $mbank->mt940_summary(MBANK_IBAN, $startDate, $endDate);
