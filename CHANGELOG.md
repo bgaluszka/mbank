@@ -1,4 +1,5 @@
 * 2019-03-08
+  * Added mt940_summary() feature (Marcin Orlowski)
   * Separated example scripts from README (Marcin Orlowski)
   * Main library code cleanup (Marcin Orlowski)
   * Added DOM extension to library dependencies (Marcin Orlowski)

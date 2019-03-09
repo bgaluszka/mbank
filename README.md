@@ -4,7 +4,9 @@
 
  * list available accounts, 
  * list recent operations on the accounts,
- * MT940 reports fetching (requires mBank's MT940 reports to be enabled for the account)
+ * MT940 support (requires mBank's MT940 reports to be enabled for the account)
+   * MT940 file report fetch for specified date range
+   * MT940 based transaction summary for specified date range
 
 ## Requirements
 
