@@ -1,6 +1,6 @@
 <?php
 /**
- * Fetch MT940 report
+ * Fetch MT940 report file
  */
 require_once 'vendor/autoload.php';
 
