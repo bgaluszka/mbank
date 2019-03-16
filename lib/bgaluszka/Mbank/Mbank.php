@@ -3,7 +3,7 @@
 namespace bgaluszka\Mbank;
 
 /**
- * Library for accessing mBank (mbank.pl/cz) transaction service
+ * Library for accessing mBank (mbank.pl/cz/sk) transaction service
  *
  * Class Mbank
  *
@@ -78,7 +78,7 @@ class Mbank
         /**
 	 * Mbank constructor.
          * 
-         * @param string $countryCode cz | pl
+         * @param string $countryCode cz | sk | pl
          */
 	public function __construct($countryCode = 'pl')
 	{
@@ -112,16 +112,23 @@ class Mbank
         /**
          * Set Country of Bank
          * 
-         * @param string $countryCode pl or cz
-	 *
-	 * @throws \InvalidArgumentException
+         * @param string $countryCode pl, sk or cz
+         *
+         * @throws \InvalidArgumentException
          */
-        public function setCountry($countryCode){
-            if(($countryCode == 'pl')||$countryCode == 'cz') {
-                $this->countryCode = $countryCode;
-                $this->url = 'https://online.mbank.'.$this->countryCode;
-            } else {
-                throw new \InvalidArgumentException('Invalid Country code '.$countryCode);
+        public function setCountry($countryCode)
+        {
+            switch ($countryCode) {
+                case 'pl':
+                case 'cz':
+                case 'sk':
+                    $this->countryCode = $countryCode;
+                    $this->url         = 'https://online.mbank.'.$this->countryCode;
+                    break;
+
+                default:
+                    throw new \InvalidArgumentException('Invalid Country code '.$countryCode);
+                    break;
             }
         }
 
@@ -369,48 +376,73 @@ class Mbank
 			'export_oper_history_format'          => 'CSV',
 		);
 
-        if ($this->countryCode == 'pl') {
-            $accoperlist_typefilter_group = array(
-                self::TRANS_ALL => 'Wszystkie',
-                self::TRANS_ARRIVED => 'Uznania rachunku',
-                self::TRANS_SENT => 'Obciążenia rachunku',
-                self::TRANS_INCOMING => 'Przelewy przychodzące',
-                self::TRANS_OUTGOING => 'Przelewy wychodzące',
-                self::TRANS_OWN => 'Przelewy własne',
-                self::TRANS_IRS => 'Przelewy podatkowe',
-                self::TRANS_ZUS => 'Przelewy do ZUS',
-                self::TRANS_CARD_TRANSACTION => 'Operacje kartowe',
-                self::TRANS_CASH_DEPOSIT => 'Wpłaty gotówkowe',
-                self::TRANS_CASH_WITHDRAWAL => 'Wypłaty gotówkowe',
-                self::TRANS_INTEREST => 'Kapitalizacja odsetek',
-                self::TRANS_FEES => 'Prowizje i opłaty',
-                'CRE100000' => 'Operacje na kredycie',
-                'TDI111000' => 'Przelew z/na r-ek brokerski',
-                'TFX111000' => 'Transakcje walutowe',
-                'TRS000000' => 'Regularne oszczędzanie',
-            );
-        } else {
-            $accoperlist_typefilter_group = array(
-                self::TRANS_ALL => 'Všechny',
-                self::TRANS_ARRIVED => 'Příchozí',
-                self::TRANS_SENT => 'Odchozí',
-                self::TRANS_INCOMING => 'Příchozí platební převody',
-                self::TRANS_OUTGOING => 'Odchozí platební převody',
-                self::TRANS_OWN => 'Vlastní převody',
-                self::TRANS_IRS => 'Dodatečné převody',
-                self::TRANS_ZUS => 'Převody do ZUS',
-                self::TRANS_CARD_TRANSACTION => 'Karetní transakce',
-                self::TRANS_CASH_DEPOSIT => 'Hotovostní vklad',
-                self::TRANS_CASH_WITHDRAWAL => 'Hotovostní výběr',
-                self::TRANS_CASH_DEPOSIT => 'Hotovostní výběry',
-                self::TRANS_INTEREST => 'Připsání úroků',
-                self::TRANS_FEES => 'Provize a Poplatky',
-                'CRE100000' => 'Transakce spojené s úvěrem',
-                'TDI111000' => 'Převod od/k makléři',
-                'TFX111000' => 'Valutové Transakce',
-                'TRS000000' => 'Spoření',
-            );
-        }
+                switch ($this->countryCode) {
+                    case 'pl':
+                        $accoperlist_typefilter_group = array(
+                            self::TRANS_ALL => 'Wszystkie',
+                            self::TRANS_ARRIVED => 'Uznania rachunku',
+                            self::TRANS_SENT => 'Obciążenia rachunku',
+                            self::TRANS_INCOMING => 'Przelewy przychodzące',
+                            self::TRANS_OUTGOING => 'Przelewy wychodzące',
+                            self::TRANS_OWN => 'Przelewy własne',
+                            self::TRANS_IRS => 'Przelewy podatkowe',
+                            self::TRANS_ZUS => 'Przelewy do ZUS',
+                            self::TRANS_CARD_TRANSACTION => 'Operacje kartowe',
+                            self::TRANS_CASH_DEPOSIT => 'Wpłaty gotówkowe',
+                            self::TRANS_CASH_WITHDRAWAL => 'Wypłaty gotówkowe',
+                            self::TRANS_INTEREST => 'Kapitalizacja odsetek',
+                            self::TRANS_FEES => 'Prowizje i opłaty',
+                            'CRE100000' => 'Operacje na kredycie',
+                            'TDI111000' => 'Przelew z/na r-ek brokerski',
+                            'TFX111000' => 'Transakcje walutowe',
+                            'TRS000000' => 'Regularne oszczędzanie',
+                        );
+                        break;
+                    case 'cz':
+                        $accoperlist_typefilter_group = array(
+                            self::TRANS_ALL => 'Všechny',
+                            self::TRANS_ARRIVED => 'Příchozí',
+                            self::TRANS_SENT => 'Odchozí',
+                            self::TRANS_INCOMING => 'Příchozí platební převody',
+                            self::TRANS_OUTGOING => 'Odchozí platební převody',
+                            self::TRANS_OWN => 'Vlastní převody',
+                            self::TRANS_IRS => 'Dodatečné převody',
+                            self::TRANS_ZUS => 'Převody do ZUS',
+                            self::TRANS_CARD_TRANSACTION => 'Karetní transakce',
+                            self::TRANS_CASH_DEPOSIT => 'Hotovostní vklad',
+                            self::TRANS_CASH_WITHDRAWAL => 'Hotovostní výběr',
+                            self::TRANS_INTEREST => 'Připsání úroků',
+                            self::TRANS_FEES => 'Provize a Poplatky',
+                            'CRE100000' => 'Transakce spojené s úvěrem',
+                            'TDI111000' => 'Převod od/k makléři',
+                            'TFX111000' => 'Valutové Transakce',
+                            'TRS000000' => 'Spoření',
+                        );
+                        break;
+                    case 'sk':
+                        $accoperlist_typefilter_group = array(
+                            self::TRANS_ALL => 'Všetky',
+                            self::TRANS_ARRIVED => 'Príchozí',
+                            self::TRANS_SENT => 'Odchozí',
+                            self::TRANS_INCOMING => 'Príchozí platebné prevody',
+                            self::TRANS_OUTGOING => 'Odchozí platebné prevody',
+                            self::TRANS_OWN => 'Vlastné prevody',
+                            self::TRANS_IRS => 'Dodatočné prevody',
+                            self::TRANS_ZUS => 'Prevody do ZUS',
+                            self::TRANS_CARD_TRANSACTION => 'Karetné transakcie',
+                            self::TRANS_CASH_DEPOSIT => 'Hotovostný vklad',
+                            self::TRANS_CASH_WITHDRAWAL => 'Hotovostný výber',
+                            self::TRANS_INTEREST => 'Pripsanie úrokov',
+                            self::TRANS_FEES => 'Provizie a Poplatky',
+                            'CRE100000' => 'Transakcie spojené s úverom',
+                            'TDI111000' => 'Prevod od/k makléri',
+                            'TFX111000' => 'Valutové Transakcie',
+                            'TRS000000' => 'Sporenie',
+                        );
+                        break;
+
+                }
+                
 
         if (!isset($accoperlist_typefilter_group[ $params['accoperlist_typefilter_group'] ])) {
 			throw new \InvalidArgumentException('Invalid accoperlist_typefilter_group parameter');
