@@ -3,7 +3,7 @@
 namespace bgaluszka\Mbank;
 
 /**
- * Library for accessing mBank (mbank.pl) transaction service
+ * Library for accessing mBank (mbank.pl/cz) transaction service
  *
  * Class Mbank
  *
@@ -71,13 +71,18 @@ class Mbank
 
 	/** @var string string */
 	public $url = 'https://online.mbank.pl';
+        
+        /** @var string country code pl or cz */
+        private $countryCode = 'pl';
 
-
-	/**
+        /**
 	 * Mbank constructor.
-	 */
-	public function __construct()
+         * 
+         * @param string $countryCode cz | pl
+         */
+	public function __construct($countryCode = 'pl')
 	{
+                $this->setCountry($countryCode);
 		$this->curl = curl_init();
 
 		$this->opts = array(
@@ -104,7 +109,23 @@ class Mbank
 		curl_close($this->curl);
 	}
 
-	/**
+        /**
+         * Set Country of Bank
+         * 
+         * @param string $countryCode pl or cz
+	 *
+	 * @throws \InvalidArgumentException
+         */
+        public function setCountry($countryCode){
+            if(($countryCode == 'pl')||$countryCode == 'cz') {
+                $this->countryCode = $countryCode;
+                $this->url = 'https://online.mbank.'.$this->countryCode;
+            } else {
+                throw new \InvalidArgumentException('Invalid Country code '.$countryCode);
+            }
+        }
+
+        /**
 	 * Starts mBank session
 	 *
 	 * @param string $username
@@ -117,11 +138,11 @@ class Mbank
 	public function login($username, $password)
 	{
 		$response = $this->curl(array(
-			CURLOPT_URL => $this->url . '/pl/Login',
+			CURLOPT_URL => $this->url . '/'.$this->countryCode.'/Login',
 		));
 
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/Account/JsonLogin',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Account/JsonLogin',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => array(
 				'UserName' => $username,
@@ -137,7 +158,7 @@ class Mbank
 
 		$this->tab = $response['tabId'];
 		$response = $this->curl(array(
-			CURLOPT_URL => $this->url . '/pl',
+			CURLOPT_URL => $this->url . '/'.$this->countryCode,
 		));
 
 		$this->load($response);
@@ -166,7 +187,7 @@ class Mbank
 		}
 
 		return $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/LoginMain/Account/JsonActivateProfile',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/LoginMain/Account/JsonActivateProfile',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => array(
 				'profileCode' => $profiles[ $profile ],
@@ -183,7 +204,7 @@ class Mbank
 	{
 		/** @var array $response */
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/Accounts/Accounts/List',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Accounts/Accounts/List',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => array(),
 			CURLOPT_HTTPHEADER => array('X-Requested-With: XMLHttpRequest'),
@@ -223,7 +244,7 @@ class Mbank
 	{
 		if ($iban) {
 			$this->curl(array(
-				CURLOPT_URL        => $this->url . '/pl/MyDesktop/Desktop/SetNavigationToAccountHistory',
+				CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/MyDesktop/Desktop/SetNavigationToAccountHistory',
 				CURLOPT_POST       => true,
 				CURLOPT_POSTFIELDS => array(
 					'accountNumber' => $iban,
@@ -233,7 +254,7 @@ class Mbank
 		}
 
 		$response = $this->curl(array(
-			CURLOPT_URL => $this->url . '/pl/Pfm/TransactionHistory',
+			CURLOPT_URL => $this->url . '/'.$this->countryCode.'/Pfm/TransactionHistory',
 		));
 
 		// http://php.net/manual/en/domdocument.loadhtml.php#95251
@@ -253,7 +274,7 @@ class Mbank
 				), $criteria));
 
 				$response = $this->curl(array(
-					CURLOPT_URL        => $this->url . '/pl/Pfm/TransactionHistory/TransactionList',
+					CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Pfm/TransactionHistory/TransactionList',
 					CURLOPT_POST       => true,
 					CURLOPT_POSTFIELDS => $criteria_json,
 					CURLOPT_HTTPHEADER => array(
@@ -348,28 +369,50 @@ class Mbank
 			'export_oper_history_format'          => 'CSV',
 		);
 
-		$accoperlist_typefilter_group = array(
-			self::TRANS_ALL              => 'Wszystkie',
-			self::TRANS_ARRIVED          => 'Uznania rachunku',
-			self::TRANS_SENT             => 'Obciążenia rachunku',
-			self::TRANS_INCOMING         => 'Przelewy przychodzące',
-			self::TRANS_OUTGOING         => 'Przelewy wychodzące',
-			self::TRANS_OWN              => 'Przelewy własne',
-			self::TRANS_IRS              => 'Przelewy podatkowe',
-			self::TRANS_ZUS              => 'Przelewy do ZUS',
-			self::TRANS_CARD_TRANSACTION => 'Operacje kartowe',
-			self::TRANS_CASH_DEPOSIT     => 'Wpłaty gotówkowe',
-			self::TRANS_CASH_WITHDRAWAL  => 'Wypłaty gotówkowe',
-			self::TRANS_INTEREST         => 'Kapitalizacja odsetek',
-			self::TRANS_FEES             => 'Prowizje i opłaty',
-			'CRE100000'                  => 'Operacje na kredycie',
-			'TDI111000'                  => 'Przelew z/na r-ek brokerski',
-			'TFX111000'                  => 'Transakcje walutowe',
-			'TRS000000'                  => 'Regularne oszczędzanie',
+        if ($this->countryCode == 'pl') {
+            $accoperlist_typefilter_group = array(
+                self::TRANS_ALL => 'Wszystkie',
+                self::TRANS_ARRIVED => 'Uznania rachunku',
+                self::TRANS_SENT => 'Obciążenia rachunku',
+                self::TRANS_INCOMING => 'Przelewy przychodzące',
+                self::TRANS_OUTGOING => 'Przelewy wychodzące',
+                self::TRANS_OWN => 'Przelewy własne',
+                self::TRANS_IRS => 'Przelewy podatkowe',
+                self::TRANS_ZUS => 'Przelewy do ZUS',
+                self::TRANS_CARD_TRANSACTION => 'Operacje kartowe',
+                self::TRANS_CASH_DEPOSIT => 'Wpłaty gotówkowe',
+                self::TRANS_CASH_WITHDRAWAL => 'Wypłaty gotówkowe',
+                self::TRANS_INTEREST => 'Kapitalizacja odsetek',
+                self::TRANS_FEES => 'Prowizje i opłaty',
+                'CRE100000' => 'Operacje na kredycie',
+                'TDI111000' => 'Przelew z/na r-ek brokerski',
+                'TFX111000' => 'Transakcje walutowe',
+                'TRS000000' => 'Regularne oszczędzanie',
+            );
+        } else {
+            $accoperlist_typefilter_group = array(
+                self::TRANS_ALL => 'Všechny',
+                self::TRANS_ARRIVED => 'Příchozí',
+                self::TRANS_SENT => 'Odchozí',
+                self::TRANS_INCOMING => 'Příchozí platební převody',
+                self::TRANS_OUTGOING => 'Odchozí platební převody',
+                self::TRANS_OWN => 'Vlastní převody',
+                self::TRANS_IRS => 'Dodatečné převody',
+                self::TRANS_ZUS => 'Převody do ZUS',
+                self::TRANS_CARD_TRANSACTION => 'Karetní transakce',
+                self::TRANS_CASH_DEPOSIT => 'Hotovostní vklad',
+                self::TRANS_CASH_WITHDRAWAL => 'Hotovostní výběr',
+                self::TRANS_CASH_DEPOSIT => 'Hotovostní výběry',
+                self::TRANS_INTEREST => 'Připsání úroků',
+                self::TRANS_FEES => 'Provize a Poplatky',
+                'CRE100000' => 'Transakce spojené s úvěrem',
+                'TDI111000' => 'Převod od/k makléři',
+                'TFX111000' => 'Valutové Transakce',
+                'TRS000000' => 'Spoření',
+            );
+        }
 
-		);
-
-		if (!isset($accoperlist_typefilter_group[ $params['accoperlist_typefilter_group'] ])) {
+        if (!isset($accoperlist_typefilter_group[ $params['accoperlist_typefilter_group'] ])) {
 			throw new \InvalidArgumentException('Invalid accoperlist_typefilter_group parameter');
 		}
 
@@ -398,7 +441,7 @@ class Mbank
 	public function contacts()
 	{
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/AddressBook/Data/GetContactListForAddressBook',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/AddressBook/Data/GetContactListForAddressBook',
 			CURLOPT_HTTPHEADER => array(
 				'Content-Type: application/json',
 				'X-Requested-With: XMLHttpRequest',
@@ -422,7 +465,7 @@ class Mbank
 		$params = json_encode($params);
 
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/AddressBook/Data/GetContactDetails',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/AddressBook/Data/GetContactDetails',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => $params,
 			CURLOPT_HTTPHEADER => array(
@@ -454,7 +497,7 @@ class Mbank
 			'templateId'    => $transfer_id,
 		);
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/PrepareTransferDomestic',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/MyTransfer/TransferDomestic/PrepareTransferDomestic',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => json_encode($params),
 			CURLOPT_HTTPHEADER => array(
@@ -551,7 +594,7 @@ class Mbank
 		);
 
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/MyTransfer/TransferDomestic/IntermediateSubmitTransferDomestic',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => json_encode($params),
 			CURLOPT_HTTPHEADER => array(
@@ -590,7 +633,7 @@ class Mbank
 		$params = json_encode($params);
 
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/MyTransfer/TransferDomestic/FinalSubmitTransferDomestic',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => $params,
 			CURLOPT_HTTPHEADER => array(
@@ -673,7 +716,7 @@ class Mbank
 		);
 
 		$response = $this->curl(array(
-			CURLOPT_URL => $this->url . '/pl/Pfm/Reports/DownloadMT940Report?' . http_build_query($query_params),
+			CURLOPT_URL => $this->url . '/'.$this->countryCode.'/Pfm/Reports/DownloadMT940Report?' . http_build_query($query_params),
 		));
 
 		return $response;
@@ -704,7 +747,7 @@ class Mbank
 		);
 
 		$response = $this->curl(array(
-			CURLOPT_URL        => $this->url . '/pl/Pfm/Reports/GetReportDetails',
+			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Pfm/Reports/GetReportDetails',
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => http_build_query($params),
 		));
@@ -750,7 +793,7 @@ class Mbank
 		$this->tab = null;
 
 		return $this->curl(array(
-				CURLOPT_URL => $this->url . '/pl/Account/Logout',
+				CURLOPT_URL => $this->url . '/'.$this->countryCode.'/Account/Logout',
 			)
 		);
 	}
