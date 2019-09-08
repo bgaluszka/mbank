@@ -151,12 +151,25 @@ class Mbank
 		$response = $this->curl(array(
 			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Account/JsonLogin',
 			CURLOPT_POST       => true,
-			CURLOPT_POSTFIELDS => array(
-				'UserName' => $username,
-				'Password' => $password,
-				'Seed'     => '',
-				'Lang'     => '',
-			),
+			CURLOPT_POSTFIELDS => json_encode(array(
+				'HrefHasHash'        => false,
+				'Scenario'           => 'Default',
+				'DfpData'            => array(
+				    'dfp'            => null,
+				    'errorMessage'   => null,
+				    'scaOperationId' => null,
+				),
+				'UWAdditionalParams' => array(
+				    'InOut'         => null,
+				    'ReturnAddress' => null,
+				    'Source'        => null,
+				),
+				'UserName'           => $username,
+				'Password'           => $password,
+				'Seed'               => '',
+				'Lang'               => '',
+			)),
+			CURLOPT_HTTPHEADER => array('Content-Type: application/json;charset=UTF-8'),
 		));
 
 		if (empty($response['successful'])) {
