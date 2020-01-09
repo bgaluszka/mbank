@@ -71,13 +71,13 @@ class Mbank
 
 	/** @var string string */
 	public $url = 'https://online.mbank.pl';
-        
+
         /** @var string country code pl or cz */
         private $countryCode = 'pl';
 
         /**
 	 * Mbank constructor.
-         * 
+         *
          * @param string $countryCode cz | sk | pl
          */
 	public function __construct($countryCode = 'pl')
@@ -100,6 +100,7 @@ class Mbank
 			CURLOPT_COOKIEJAR       => (PHP_OS === 'Windows') ? 'null' : '/dev/null',
 		);
 
+
 		$this->document = new \DOMDocument('1.0', 'UTF-8');
 		$this->document->preserveWhiteSpace = false;
 	}
@@ -111,7 +112,7 @@ class Mbank
 
         /**
          * Set Country of Bank
-         * 
+         *
          * @param string $countryCode pl, sk or cz
          *
          * @throws \InvalidArgumentException
@@ -137,12 +138,14 @@ class Mbank
 	 *
 	 * @param string $username
 	 * @param string $password
+	 * @param string $dfp dfp value from browser
+	 * @param string $mbank8 mbank8 cookie value
 	 *
 	 * @return bool
 	 *
 	 * @throws \RuntimeException
 	 */
-	public function login($username, $password)
+	public function login($username, $password, $dfp, $mbank8)
 	{
 		$response = $this->curl(array(
 			CURLOPT_URL => $this->url . '/'.$this->countryCode.'/Login',
@@ -150,14 +153,15 @@ class Mbank
 
 		$response = $this->curl(array(
 			CURLOPT_URL        => $this->url . '/'.$this->countryCode.'/Account/JsonLogin',
+            CURLOPT_COOKIE => 'mBank8='.$mbank8,
 			CURLOPT_POST       => true,
 			CURLOPT_POSTFIELDS => json_encode(array(
 				'HrefHasHash'        => false,
 				'Scenario'           => 'Default',
 				'DfpData'            => array(
-				    'dfp'            => null,
+				    'dfp'            => $dfp,
 				    'errorMessage'   => null,
-				    'scaOperationId' => null,
+				    'scaOperationId' => uniqid(),
 				),
 				'UWAdditionalParams' => array(
 				    'InOut'         => null,
@@ -455,7 +459,7 @@ class Mbank
                         break;
 
                 }
-                
+
 
         if (!isset($accoperlist_typefilter_group[ $params['accoperlist_typefilter_group'] ])) {
 			throw new \InvalidArgumentException('Invalid accoperlist_typefilter_group parameter');
