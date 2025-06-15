@@ -82,7 +82,7 @@ class Mbank
          */
 	public function __construct($countryCode = 'pl')
 	{
-                $this->setCountry($countryCode);
+        $this->setCountry($countryCode);
 		$this->curl = curl_init();
 
 		$this->opts = array(
@@ -121,10 +121,14 @@ class Mbank
         {
             switch ($countryCode) {
                 case 'pl':
-                case 'cz':
                 case 'sk':
                     $this->countryCode = $countryCode;
                     $this->url         = 'https://online.mbank.'.$this->countryCode;
+                    break;
+                case 'cs':
+                case 'cz':
+                    $this->countryCode = "cs";
+                    $this->url         = 'https://online.mbank.cz';
                     break;
 
                 default:
