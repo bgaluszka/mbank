@@ -1058,6 +1058,40 @@ class Mbank
 	}
 
 	/**
+     * Allows executing a request from outside the class
+     * to run parallel or isolated requests
+     *
+     * @param array $opts optional array of cURL extension options to pass to its curl_exec()
+	 * @return array
+	 *
+	 * @throws \RuntimeException
+	 */
+    public function getCurl(array $opts = array())
+	{
+		return $this->curl($opts);
+	}
+
+	/**
+     * Returns the resolved base URL.
+     *
+     * @return string
+     */
+	public function getUrl()
+	{
+		return $this->url();
+	}
+
+    /**
+     * Returns the DOMXPath instance.
+     *
+     * @return \DOMXPath
+     */
+    public function getDOMXPath()
+    {
+        return $this->xpath();
+    }
+	
+	/**
 	 * @param string|array $html
 	 * @param bool         $add_xml_header if @true, we append <?xml encoding="UTF-8"> to data prior loading the data.
 	 *                                     Needed to ensure proper encoding of accented characters. Default to @false
@@ -1066,7 +1100,7 @@ class Mbank
 	 *
 	 * @throws \RuntimeException
 	 */
-	protected function load($html, $add_xml_header = false)
+	public function load($html, $add_xml_header = false)
 	{
 		if (is_array($html)) {
 			$html = implode('', $html);
